@@ -9,7 +9,7 @@ from typing import List, Optional
 import time
 import numpy as np
 
-from app.database import get_db
+from app.database_core import get_db
 from app.models_core import Person, Face
 from app.schemas_core import (
     DetectFacesRequest, DetectFacesResponse, DetectedFaceResponse, BoundingBox,
@@ -20,11 +20,16 @@ from app.schemas_core import (
     MergePersonsRequest, MergePersonsResponse,
     SystemStats, HealthResponse
 )
-from app.face_detection import detect_faces
-from app.face_recognition import get_face_embedding
-from app.clustering import cluster_faces as perform_clustering
+from app.face_detection import FaceDetector
+from app.face_recognition import FaceRecognizer
+from app.clustering import FaceClustering
 
 router = APIRouter()
+
+# Initialize face detection, recognition and clustering
+detector = FaceDetector()
+recognizer = FaceRecognizer()
+clusterer = FaceClustering()
 
 
 # ============================================================================
@@ -62,7 +67,7 @@ async def detect_faces_in_image(
         f.write(content)
     
     # Detect faces
-    detected = detect_faces(file_path)
+    detected = detector.detect_faces(file_path)
     if not detected:
         return DetectFacesResponse(
             faces=[],
@@ -73,18 +78,18 @@ async def detect_faces_in_image(
     # Generate embeddings
     faces_response = []
     for face_data in detected:
-        if face_data['confidence'] < min_confidence:
+        if face_data['score'] < min_confidence:
             continue
             
-        embedding = get_face_embedding(file_path, face_data['bbox'])
+        embedding = recognizer.generate_embedding(file_path, face_data['facial_area'])
         if embedding is None:
             continue
         
         bbox = BoundingBox(
-            x=int(face_data['bbox'][0]),
-            y=int(face_data['bbox'][1]),
-            width=int(face_data['bbox'][2]),
-            height=int(face_data['bbox'][3])
+            x=int(face_data['facial_area'][0]),
+            y=int(face_data['facial_area'][1]),
+            width=int(face_data['facial_area'][2]),
+            height=int(face_data['facial_area'][3])
         )
         
         # Auto-save to database
@@ -95,7 +100,7 @@ async def detect_faces_in_image(
                 bbox_y=bbox.y,
                 bbox_width=bbox.width,
                 bbox_height=bbox.height,
-                confidence=float(face_data['confidence']),
+                confidence=float(face_data['score']),
                 embedding=embedding.tolist(),
                 person_id=None  # Will be assigned by clustering or matching
             )
@@ -103,7 +108,7 @@ async def detect_faces_in_image(
         
         faces_response.append(DetectedFaceResponse(
             bbox=bbox,
-            confidence=float(face_data['confidence']),
+            confidence=float(face_data['score']),
             embedding=embedding.tolist()
         ))
     
@@ -196,7 +201,7 @@ async def list_persons(
         PersonResponse(
             id=p.id,
             name=p.name,
-            metadata=p.metadata,
+            metadata=p.extra_data,
             face_count=len(p.faces),
             created_at=p.created_at,
             updated_at=p.updated_at
@@ -213,7 +218,7 @@ async def create_person(
     """Create a new person entity"""
     new_person = Person(
         name=person.name,
-        metadata=person.metadata
+        extra_data=person.metadata
     )
     db.add(new_person)
     db.commit()
@@ -222,7 +227,7 @@ async def create_person(
     return PersonResponse(
         id=new_person.id,
         name=new_person.name,
-        metadata=new_person.metadata,
+        metadata=new_person.extra_data,
         face_count=0,
         created_at=new_person.created_at,
         updated_at=new_person.updated_at
@@ -245,7 +250,7 @@ async def get_person(
         person=PersonResponse(
             id=person.id,
             name=person.name,
-            metadata=person.metadata,
+            metadata=person.extra_data,
             face_count=len(faces),
             created_at=person.created_at,
             updated_at=person.updated_at
@@ -268,7 +273,7 @@ async def update_person(
     if person_update.name is not None:
         person.name = person_update.name
     if person_update.metadata is not None:
-        person.metadata = person_update.metadata
+        person.extra_data = person_update.metadata
     
     db.commit()
     db.refresh(person)
@@ -276,7 +281,7 @@ async def update_person(
     return PersonResponse(
         id=person.id,
         name=person.name,
-        metadata=person.metadata,
+        metadata=person.extra_data,
         face_count=len(person.faces),
         created_at=person.created_at,
         updated_at=person.updated_at
@@ -414,19 +419,53 @@ async def cluster_faces_endpoint(
     if not faces:
         raise HTTPException(status_code=404, detail="No faces found to cluster")
     
+    # Prepare embeddings dictionary
+    embeddings_dict = {}
+    for face in faces:
+        if face.embedding:
+            # Convert JSON array back to numpy array
+            embeddings_dict[face.id] = np.array(face.embedding)
+    
     # Perform clustering
-    result = perform_clustering(
-        threshold=request.eps,
-        min_samples=request.min_samples,
-        db=db
-    )
+    clusters = clusterer.cluster_faces(embeddings_dict)
+    
+    # Get noise faces (faces not assigned to any cluster)
+    clustered_face_ids = set()
+    for face_ids in clusters.values():
+        clustered_face_ids.update(face_ids)
+    
+    all_face_ids = set(embeddings_dict.keys())
+    noise_face_ids = list(all_face_ids - clustered_face_ids)
+    
+    # Create Person entities for each cluster
+    cluster_list = []
+    for cluster_id, face_ids in clusters.items():
+        # Create or get Person for this cluster
+        person = Person(name=f"Person {cluster_id}")
+        db.add(person)
+        db.flush()  # Get the person.id
+        
+        # Assign faces to this person
+        for face_id in face_ids:
+            face = db.query(Face).filter(Face.id == face_id).first()
+            if face:
+                face.person_id = person.id
+        
+        cluster_list.append({
+            'cluster_id': cluster_id,
+            'person_id': person.id,
+            'face_ids': face_ids,
+            'size': len(face_ids)
+        })
+    
+    db.commit()
     
     processing_time = (time.time() - start_time) * 1000
     
     return ClusterFacesResponse(
-        clusters=result['clusters'],
-        noise_face_ids=result.get('noise', []),
-        total_clusters=len(result['clusters']),
+        clusters=cluster_list,
+        noise_face_ids=noise_face_ids,
+        total_clusters=len(clusters),
         processing_time_ms=processing_time
     )
 

@@ -9,7 +9,7 @@ NO albums, NO business logic. Can be reused by multiple applications.
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, JSON
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from app.database import Base
+from app.database_core import Base
 
 
 class Person(Base):
@@ -29,8 +29,8 @@ class Person(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
-    # Metadata (JSON for flexibility)
-    metadata = Column(JSON, nullable=True)  # Can store external refs: {"app_user_id": "uuid"}
+    # Extra data (JSON for flexibility) - renamed from 'metadata' to avoid SQLAlchemy conflict
+    extra_data = Column(JSON, nullable=True)  # Can store external refs: {"app_user_id": "uuid"}
     
     # Relationships
     faces = relationship("Face", back_populates="person", cascade="all, delete-orphan")
@@ -72,8 +72,8 @@ class Face(Base):
     person_id = Column(Integer, ForeignKey("persons.id"), nullable=True, index=True)
     person = relationship("Person", back_populates="faces")
     
-    # Metadata (JSON for flexibility)
-    metadata = Column(JSON, nullable=True)  # Can store: {"photo_id": "uuid", "source": "app"}
+    # Extra data (JSON for flexibility) - renamed from 'metadata' to avoid SQLAlchemy conflict
+    extra_data = Column(JSON, nullable=True)  # Can store: {"photo_id": "uuid", "source": "app"}
     
     # Timestamps
     detected_at = Column(DateTime, default=datetime.utcnow, nullable=False)

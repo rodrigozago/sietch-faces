@@ -30,7 +30,7 @@ def get_db():
 
 def init_db():
     """Initialize database tables"""
-    from app.models import Face, Person
+    from app.models import Face, Person, User, Photo
     Base.metadata.create_all(bind=engine)
     print("Database initialized successfully!")
 

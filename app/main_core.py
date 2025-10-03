@@ -22,8 +22,8 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 
 from app.config import get_settings
-from app.database import init_db
-from app.routes import core
+from app.database_core import init_db
+from app.routes.core import router as core_router  # Import direto do módulo, sem passar pelo __init__.py
 
 settings = get_settings()
 
@@ -81,7 +81,7 @@ async def root():
 
 
 # Include core router
-app.include_router(core.router, tags=["Core"])
+app.include_router(core_router, tags=["Core"])
 
 
 if __name__ == "__main__":

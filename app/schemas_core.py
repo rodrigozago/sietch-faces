@@ -140,7 +140,7 @@ class FaceResponse(BaseModel):
             ),
             confidence=face.confidence,
             detected_at=face.detected_at,
-            metadata=face.metadata
+            metadata=face.extra_data
         )
 
 

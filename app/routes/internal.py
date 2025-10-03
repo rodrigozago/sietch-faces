@@ -19,12 +19,16 @@ from app.schemas_v2 import (
     PhotoResponse, PhotoWithFaces,
     UnclaimedMatch, ClaimPersonRequest, ClaimPersonResponse
 )
-from app.face_detection import detect_faces
-from app.face_recognition import get_face_embedding
+from app.face_detection import FaceDetector
+from app.face_recognition import FaceRecognizer
 from app.services.face_matching import FaceMatchingService, MatchConfidence
 from app.services.claim_service import ClaimService
 
 router = APIRouter(prefix="/internal", tags=["internal"])
+
+# Initialize face processing services
+face_detector = FaceDetector()
+face_recognizer = FaceRecognizer()
 
 
 @router.post("/auth/register", response_model=UserResponse)
@@ -61,7 +65,7 @@ async def register_with_face(
         raise HTTPException(status_code=400, detail=f"Invalid image data: {str(e)}")
     
     # Detect faces
-    faces = detect_faces(temp_path)
+    faces = face_detector.detect_faces(temp_path)
     if not faces:
         raise HTTPException(status_code=400, detail="No face detected in the image. Please provide a clear face photo.")
     
@@ -71,7 +75,9 @@ async def register_with_face(
     # Generate face embedding
     face_data = faces[0]
     try:
-        embedding = get_face_embedding(temp_path, face_data['bbox'])
+        # FaceDetector returns 'facial_area' not 'bbox'
+        bbox = face_data['facial_area']
+        embedding = face_recognizer.generate_embedding(temp_path, bbox)
         if embedding is None:
             raise HTTPException(status_code=400, detail="Failed to generate face embedding")
     except Exception as e:
@@ -104,11 +110,11 @@ async def register_with_face(
     face_record = Face(
         person_id=person.id,
         image_path=temp_path,
-        bbox_x=int(face_data['bbox'][0]),
-        bbox_y=int(face_data['bbox'][1]),
-        bbox_width=int(face_data['bbox'][2]),
-        bbox_height=int(face_data['bbox'][3]),
-        confidence=float(face_data['confidence']),
+        bbox_x=int(bbox[0]),
+        bbox_y=int(bbox[1]),
+        bbox_width=int(bbox[2]),
+        bbox_height=int(bbox[3]),
+        confidence=float(face_data['score']),
         embedding=embedding.tolist()
     )
     db.add(face_record)
@@ -176,13 +182,14 @@ async def validate_credentials(
             image.save(temp_path)
             
             # Detect face
-            faces = detect_faces(temp_path)
+            faces = face_detector.detect_faces(temp_path)
             if not faces:
                 raise HTTPException(status_code=400, detail="No face detected")
             
             # Generate embedding
             face_data = faces[0]
-            embedding = get_face_embedding(temp_path, face_data['bbox'])
+            bbox = face_data['facial_area']
+            embedding = face_recognizer.generate_embedding(temp_path, bbox)
             
             # Compare with user's known faces
             if user.person_id:
@@ -260,14 +267,15 @@ async def process_photo(
     db.flush()
     
     # Detect faces
-    detected_faces = detect_faces(file_path)
+    detected_faces = face_detector.detect_faces(file_path)
     
     face_records = []
     face_matching_service = FaceMatchingService(db)
     
     for face_data in detected_faces:
         # Generate embedding
-        embedding = get_face_embedding(file_path, face_data['bbox'])
+        bbox = face_data['facial_area']
+        embedding = face_recognizer.generate_embedding(file_path, bbox)
         if embedding is None:
             continue
         
@@ -293,11 +301,11 @@ async def process_photo(
             person_id=person_id,
             photo_id=photo.id,
             image_path=file_path,
-            bbox_x=int(face_data['bbox'][0]),
-            bbox_y=int(face_data['bbox'][1]),
-            bbox_width=int(face_data['bbox'][2]),
-            bbox_height=int(face_data['bbox'][3]),
-            confidence=float(face_data['confidence']),
+            bbox_x=int(bbox[0]),
+            bbox_y=int(bbox[1]),
+            bbox_width=int(bbox[2]),
+            bbox_height=int(bbox[3]),
+            confidence=float(face_data['score']),
             embedding=embedding.tolist()
         )
         db.add(face_record)
