@@ -1,0 +1,595 @@
+{
+	"info": {
+		"_postman_id": "bff-api-collection-v2",
+		"name": "Sietch Faces - BFF API v2.0",
+		"description": "Business Logic Layer - Backend for Frontend API with authentication, albums, photos, and user management.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Save session token if present",
+									"if (pm.response.code === 200 && pm.response.json().token) {",
+									"    pm.environment.set('SESSION_TOKEN', pm.response.json().token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"john@example.com\",\n  \"username\": \"johndoe\",\n  \"password\": \"SecurePassword123!\",\n  \"faceImageBase64\": \"data:image/jpeg;base64,/9j/4AAQ...\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/auth/register",
+							"host": ["{{BASE_URL}}"],
+							"path": ["auth", "register"]
+						},
+						"description": "Register new user with face image. Automatically creates auto-album."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Session",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{SESSION_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/auth/session",
+							"host": ["{{BASE_URL}}"],
+							"path": ["auth", "session"]
+						},
+						"description": "Get current session information"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Albums",
+			"item": [
+				{
+					"name": "List Albums",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{SESSION_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/albums",
+							"host": ["{{BASE_URL}}"],
+							"path": ["albums"]
+						},
+						"description": "Get all albums for current user (personal + auto-albums)"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Album",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Save album ID for subsequent requests",
+									"if (pm.response.code === 200 && pm.response.json().id) {",
+									"    pm.environment.set('ALBUM_ID', pm.response.json().id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{SESSION_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Summer Vacation 2024\",\n  \"description\": \"Beach trip to Hawaii\",\n  \"albumType\": \"personal\",\n  \"isPrivate\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/albums",
+							"host": ["{{BASE_URL}}"],
+							"path": ["albums"]
+						},
+						"description": "Create a new personal album"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Album",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{SESSION_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/albums/{{ALBUM_ID}}",
+							"host": ["{{BASE_URL}}"],
+							"path": ["albums", "{{ALBUM_ID}}"]
+						},
+						"description": "Get album details"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Album",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{SESSION_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Summer Vacation 2024 - Updated\",\n  \"description\": \"Amazing trip!\",\n  \"isPrivate\": false\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/albums/{{ALBUM_ID}}",
+							"host": ["{{BASE_URL}}"],
+							"path": ["albums", "{{ALBUM_ID}}"]
+						},
+						"description": "Update album details"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Album",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{SESSION_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/albums/{{ALBUM_ID}}",
+							"host": ["{{BASE_URL}}"],
+							"path": ["albums", "{{ALBUM_ID}}"]
+						},
+						"description": "Delete album (cannot delete auto-albums)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Album Photos",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{SESSION_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/albums/{{ALBUM_ID}}/photos?page=1&limit=20",
+							"host": ["{{BASE_URL}}"],
+							"path": ["albums", "{{ALBUM_ID}}", "photos"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								}
+							]
+						},
+						"description": "Get all photos in an album with pagination"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Photos",
+			"item": [
+				{
+					"name": "Upload Photo",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Save photo ID for subsequent requests",
+									"if (pm.response.code === 200 && pm.response.json().photo && pm.response.json().photo.id) {",
+									"    pm.environment.set('PHOTO_ID', pm.response.json().photo.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{SESSION_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": [],
+									"description": "Photo file to upload"
+								},
+								{
+									"key": "albumId",
+									"value": "{{ALBUM_ID}}",
+									"type": "text",
+									"description": "Album to add photo to"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/photos/upload",
+							"host": ["{{BASE_URL}}"],
+							"path": ["photos", "upload"]
+						},
+						"description": "Upload photo to album. Auto-detects faces and adds to relevant auto-albums."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Photo",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{SESSION_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/photos/{{PHOTO_ID}}",
+							"host": ["{{BASE_URL}}"],
+							"path": ["photos", "{{PHOTO_ID}}"]
+						},
+						"description": "Get photo details with detected faces and albums"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Photo",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{SESSION_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/photos/{{PHOTO_ID}}",
+							"host": ["{{BASE_URL}}"],
+							"path": ["photos", "{{PHOTO_ID}}"]
+						},
+						"description": "Delete photo from all albums and remove faces from Core API"
+					},
+					"response": []
+				},
+				{
+					"name": "Add Photo to Album",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{SESSION_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"albumId\": \"{{ALBUM_ID}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/photos/{{PHOTO_ID}}/add-to-album",
+							"host": ["{{BASE_URL}}"],
+							"path": ["photos", "{{PHOTO_ID}}", "add-to-album"]
+						},
+						"description": "Add existing photo to another album"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "User",
+			"item": [
+				{
+					"name": "Get Current User",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{SESSION_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/users/me",
+							"host": ["{{BASE_URL}}"],
+							"path": ["users", "me"]
+						},
+						"description": "Get current user profile and statistics"
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Stats",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{SESSION_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/users/me/stats",
+							"host": ["{{BASE_URL}}"],
+							"path": ["users", "me", "stats"]
+						},
+						"description": "Get detailed user statistics (albums, photos, faces)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Unclaimed Matches",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{SESSION_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/users/me/unclaimed",
+							"host": ["{{BASE_URL}}"],
+							"path": ["users", "me", "unclaimed"]
+						},
+						"description": "Get unclaimed person clusters from Core API that may belong to user"
+					},
+					"response": []
+				},
+				{
+					"name": "Claim Person Clusters",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{SESSION_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"corePersonIds\": [10, 15, 22]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/users/me/claim",
+							"host": ["{{BASE_URL}}"],
+							"path": ["users", "me", "claim"]
+						},
+						"description": "Claim person clusters from Core API and merge into user's person. Auto-adds photos to user's auto-album."
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{SESSION_TOKEN}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "BASE_URL",
+			"value": "http://localhost:3000/api",
+			"type": "string"
+		},
+		{
+			"key": "SESSION_TOKEN",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "ALBUM_ID",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "PHOTO_ID",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

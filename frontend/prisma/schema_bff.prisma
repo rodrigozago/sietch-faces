@@ -1,0 +1,177 @@
+// Prisma Schema for Next.js BFF (Business Logic Layer)
+// This handles user authentication, albums, and photo organization
+// References Core API's persons/faces by ID only
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// User & Authentication
+// ============================================================================
+
+model User {
+  id             String   @id @default(uuid())
+  email          String   @unique
+  username       String   @unique
+  hashedPassword String   @map("hashed_password")
+  isActive       Boolean  @default(true) @map("is_active")
+  isVerified     Boolean  @default(false) @map("is_verified")
+  
+  // Reference to Core API Person (just the ID, int)
+  corePersonId   Int?     @map("core_person_id")
+  
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relationships
+  uploadedPhotos Photo[]      @relation("PhotoUploader")
+  ownedAlbums    Album[]      @relation("AlbumOwner")
+  albumPhotos    AlbumPhoto[] @relation("AlbumPhotoAdder")
+
+  @@map("users")
+}
+
+// ============================================================================
+// Albums
+// ============================================================================
+
+enum AlbumType {
+  personal   // User-created album
+  auto_faces // Auto-generated "Photos of {user}"
+  shared     // Shared album (future)
+}
+
+model Album {
+  id          String     @id @default(uuid())
+  name        String
+  description String?
+  
+  // Owner of the album
+  ownerId     String     @map("owner_id")
+  owner       User       @relation("AlbumOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  
+  // Album type and properties
+  albumType   AlbumType  @default(personal) @map("album_type")
+  isPrivate   Boolean    @default(true) @map("is_private")
+  
+  // If auto_faces album, reference to Core Person (just ID)
+  corePersonId Int?      @map("core_person_id")
+  
+  // Timestamps
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  // Many-to-many with Photos
+  albumPhotos AlbumPhoto[]
+
+  @@map("albums")
+  @@index([ownerId])
+  @@index([albumType])
+  @@index([corePersonId])
+}
+
+// ============================================================================
+// Photos
+// ============================================================================
+
+model Photo {
+  id         String   @id @default(uuid())
+  
+  // Who uploaded this photo
+  uploaderId String   @map("uploader_id")
+  uploader   User     @relation("PhotoUploader", fields: [uploaderId], references: [id], onDelete: Cascade)
+  
+  // Image storage
+  imagePath  String   @map("image_path")
+  
+  // References to Core API faces (array of Face IDs from Core DB)
+  coreFaceIds Int[]   @default([]) @map("core_face_ids")
+  
+  // Timestamps
+  uploadedAt DateTime @default(now()) @map("uploaded_at")
+
+  // Many-to-many with Albums
+  albumPhotos AlbumPhoto[]
+
+  @@map("photos")
+  @@index([uploaderId])
+  @@index([uploadedAt])
+}
+
+// ============================================================================
+// Album-Photo Junction (Many-to-Many)
+// ============================================================================
+
+model AlbumPhoto {
+  id        String   @id @default(uuid())
+  
+  // The album this photo is in
+  albumId   String   @map("album_id")
+  album     Album    @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  
+  // The photo in this album
+  photoId   String   @map("photo_id")
+  photo     Photo    @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  
+  // Who added this photo to the album
+  addedByUserId String?  @map("added_by_user_id")
+  addedBy       User?    @relation("AlbumPhotoAdder", fields: [addedByUserId], references: [id], onDelete: SetNull)
+  
+  // Was this auto-added by the system?
+  isAutoAdded Boolean  @default(false) @map("is_auto_added")
+  
+  // When was it added
+  addedAt   DateTime @default(now()) @map("added_at")
+
+  @@unique([albumId, photoId]) // A photo can only be in an album once
+  @@map("album_photos")
+  @@index([albumId])
+  @@index([photoId])
+  @@index([addedAt])
+}
+
+// ============================================================================
+// Sessions (NextAuth)
+// ============================================================================
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  
+  @@map("sessions")
+}
+
+model Account {
+  id                String  @id @default(uuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}

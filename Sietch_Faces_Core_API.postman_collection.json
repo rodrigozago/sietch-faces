@@ -1,0 +1,391 @@
+{
+	"info": {
+		"_postman_id": "core-api-collection-v2",
+		"name": "Sietch Faces - Core API v2.0",
+		"description": "Facial Recognition Microservice - Core API endpoints for face detection, similarity search, person management, and clustering.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Health & Stats",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/health",
+							"host": ["{{BASE_URL}}"],
+							"path": ["health"]
+						},
+						"description": "Check if the Core API is running and healthy"
+					},
+					"response": []
+				},
+				{
+					"name": "System Stats",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/stats",
+							"host": ["{{BASE_URL}}"],
+							"path": ["stats"]
+						},
+						"description": "Get system statistics (person count, face count, etc.)"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Face Detection",
+			"item": [
+				{
+					"name": "Detect Faces",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": [],
+									"description": "Image file to detect faces in"
+								},
+								{
+									"key": "min_confidence",
+									"value": "0.9",
+									"type": "text",
+									"description": "Minimum detection confidence (0.0-1.0)"
+								},
+								{
+									"key": "auto_save",
+									"value": "true",
+									"type": "text",
+									"description": "Automatically save detected faces to database"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/detect",
+							"host": ["{{BASE_URL}}"],
+							"path": ["detect"]
+						},
+						"description": "Upload image and detect faces. Returns bounding boxes, confidence scores, and 512D embeddings."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Similarity Search",
+			"item": [
+				{
+					"name": "Search Similar Faces",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"embedding\": [0.123, 0.456],\n  \"threshold\": 0.6,\n  \"limit\": 10\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/search",
+							"host": ["{{BASE_URL}}"],
+							"path": ["search"]
+						},
+						"description": "Search for similar faces using cosine similarity. Provide 512D embedding vector."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Person Management",
+			"item": [
+				{
+					"name": "List Persons",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/persons?skip=0&limit=100",
+							"host": ["{{BASE_URL}}"],
+							"path": ["persons"],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "100"
+								}
+							]
+						},
+						"description": "Get list of all persons with pagination"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Person",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"John Doe\",\n  \"metadata\": {\n    \"app_user_id\": \"uuid-123\",\n    \"source\": \"web_app\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/persons",
+							"host": ["{{BASE_URL}}"],
+							"path": ["persons"]
+						},
+						"description": "Create a new person. Metadata can store references to external apps."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Person",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/persons/{{person_id}}",
+							"host": ["{{BASE_URL}}"],
+							"path": ["persons", "{{person_id}}"]
+						},
+						"description": "Get person details with all associated faces"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Person",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"John Smith\",\n  \"metadata\": {\n    \"app_user_id\": \"uuid-123\",\n    \"updated_by\": \"admin\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/persons/{{person_id}}",
+							"host": ["{{BASE_URL}}"],
+							"path": ["persons", "{{person_id}}"]
+						},
+						"description": "Update person name and/or metadata"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Person",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/persons/{{person_id}}",
+							"host": ["{{BASE_URL}}"],
+							"path": ["persons", "{{person_id}}"]
+						},
+						"description": "Delete person and all associated faces"
+					},
+					"response": []
+				},
+				{
+					"name": "Merge Persons",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"source_person_ids\": [2, 3, 4],\n  \"target_person_id\": 1,\n  \"keep_name\": \"John Doe\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/persons/merge",
+							"host": ["{{BASE_URL}}"],
+							"path": ["persons", "merge"]
+						},
+						"description": "Merge multiple person records into one. All faces from source persons are transferred to target."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Face Management",
+			"item": [
+				{
+					"name": "List Faces",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/faces?person_id={{person_id}}&skip=0&limit=100",
+							"host": ["{{BASE_URL}}"],
+							"path": ["faces"],
+							"query": [
+								{
+									"key": "person_id",
+									"value": "{{person_id}}",
+									"description": "Optional - filter by person"
+								},
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "100"
+								}
+							]
+						},
+						"description": "List faces, optionally filtered by person"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Face",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/faces/{{face_id}}",
+							"host": ["{{BASE_URL}}"],
+							"path": ["faces", "{{face_id}}"]
+						},
+						"description": "Get face details including embedding"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Face",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/faces/{{face_id}}",
+							"host": ["{{BASE_URL}}"],
+							"path": ["faces", "{{face_id}}"]
+						},
+						"description": "Delete a specific face record"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Clustering",
+			"item": [
+				{
+					"name": "Cluster Faces",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"face_ids\": [1, 2, 3, 4, 5],\n  \"eps\": 0.4,\n  \"min_samples\": 2\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/cluster",
+							"host": ["{{BASE_URL}}"],
+							"path": ["cluster"]
+						},
+						"description": "Cluster faces using DBSCAN algorithm. If face_ids is empty, clusters all faces."
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "BASE_URL",
+			"value": "http://localhost:8000",
+			"type": "string"
+		},
+		{
+			"key": "person_id",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "face_id",
+			"value": "1",
+			"type": "string"
+		}
+	]
+}

@@ -5,7 +5,7 @@ import os
 
 from app.config import get_settings
 from app.database import get_db, init_db
-from app.routes import upload, identify, person, clusters, stats
+from app.routes import upload, identify, person, clusters, stats, internal
 
 settings = get_settings()
 
@@ -59,6 +59,7 @@ app.include_router(identify.router, prefix="/identify", tags=["Identify"])
 app.include_router(person.router, prefix="/person", tags=["Person"])
 app.include_router(clusters.router, prefix="/clusters", tags=["Clusters"])
 app.include_router(stats.router, prefix="/stats", tags=["Statistics"])
+app.include_router(internal.router, tags=["Internal"])  # No prefix, already has /internal
 
 
 if __name__ == "__main__":
