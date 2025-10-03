@@ -1,0 +1,268 @@
+{
+	"info": {
+		"_postman_id": "sietch-faces-api",
+		"name": "Sietch Faces API",
+		"description": "API para reconhecimento facial e agrupamento de fotos da mesma pessoa",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/health",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"health"
+					]
+				},
+				"description": "Verifica se a API está funcionando"
+			},
+			"response": []
+		},
+		{
+			"name": "Root",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						""
+					]
+				},
+				"description": "Endpoint raiz da API"
+			},
+			"response": []
+		},
+		{
+			"name": "Upload Image",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Save face_id from response for later use",
+							"if (pm.response.code === 200) {",
+							"    var jsonData = pm.response.json();",
+							"    if (jsonData.faces && jsonData.faces.length > 0) {",
+							"        pm.environment.set('face_id', jsonData.faces[0].id);",
+							"        console.log('Saved face_id: ' + jsonData.faces[0].id);",
+							"    }",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": [],
+							"description": "Selecione uma imagem com faces"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{baseUrl}}/upload",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"upload"
+					]
+				},
+				"description": "Faz upload de uma imagem e detecta faces automaticamente"
+			},
+			"response": []
+		},
+		{
+			"name": "Identify Face",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"face_id\": {{face_id}},\n  \"name\": \"João Silva\",\n  \"auto_identify_similar\": true\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/identify",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"identify"
+					]
+				},
+				"description": "Identifica uma face pelo nome e automaticamente identifica faces similares"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Person by ID",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/person/{{person_id}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"person",
+						"{{person_id}}"
+					]
+				},
+				"description": "Retorna todas as informações de uma pessoa, incluindo todas as suas faces"
+			},
+			"response": []
+		},
+		{
+			"name": "List All Persons",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/person?skip=0&limit=100",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"person"
+					],
+					"query": [
+						{
+							"key": "skip",
+							"value": "0",
+							"description": "Número de registros para pular"
+						},
+						{
+							"key": "limit",
+							"value": "100",
+							"description": "Número máximo de registros"
+						}
+					]
+				},
+				"description": "Lista todas as pessoas identificadas no sistema"
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Person",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/person/{{person_id}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"person",
+						"{{person_id}}"
+					]
+				},
+				"description": "Remove uma pessoa e desvincula todas as suas faces"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Clusters",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/clusters?only_unidentified=true",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"clusters"
+					],
+					"query": [
+						{
+							"key": "only_unidentified",
+							"value": "true",
+							"description": "Se true, agrupa apenas faces não identificadas"
+						}
+					]
+				},
+				"description": "Agrupa faces similares automaticamente usando DBSCAN"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Statistics",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/stats",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"stats"
+					]
+				},
+				"description": "Retorna estatísticas do banco de dados"
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Face",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/stats/face/{{face_id}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"stats",
+						"face",
+						"{{face_id}}"
+					]
+				},
+				"description": "Remove uma face específica do banco de dados"
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8000",
+			"type": "string"
+		},
+		{
+			"key": "face_id",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "person_id",
+			"value": "1",
+			"type": "string"
+		}
+	]
+}
