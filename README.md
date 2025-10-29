@@ -1,100 +1,221 @@
-# Sietch Faces - API de Reconhecimento Facial
+# Sietch Faces - Facial Recognition Platform
 
-API para reconhecimento facial e agrupamento automático de fotos da mesma pessoa.
+> Intelligent facial recognition and photo management system with microservice architecture.
 
-## Características
+**Status:** MVP (Minimum Viable Product) - v2.0.0
 
-### 1. Detecção e Extração de Faces
-- **RetinaFace** como detector (mais robusto que MTCNN)
-- Extrai múltiplas faces de uma única imagem
-- Gera bounding boxes e confidence scores
+---
 
-### 2. Geração de Embeddings
-- Modelo **ArcFace** para máxima precisão
-- Embeddings de 512 dimensões
-- Métrica de distância: cosine similarity
+## 🎯 Overview
 
-### 3. Busca e Agrupamento
-- Busca por similaridade em tempo real
-- **DBSCAN** para clustering automático
-- Threshold ajustável (padrão: 0.4)
+Sietch Faces is a facial recognition platform built with a microservice architecture:
+- **Core API** - Pure facial recognition microservice (FastAPI)
+- **BFF** - Business logic and user interface (Next.js)
 
-### 4. Sistema de Identificação
-- Ao nomear uma face, identifica automaticamente faces similares
-- Sistema de `person_id` para agrupar múltiplas fotos
-- Propagação inteligente de identidades
+### Key Features
+- 🔍 **Face Detection** - RetinaFace detector for robust face detection
+- 🧠 **Face Recognition** - ArcFace embeddings (512 dimensions)
+- 🔎 **Similarity Search** - Cosine distance for face matching
+- 📊 **Auto-Clustering** - DBSCAN for grouping similar faces
+- 👥 **Person Management** - Track and identify people across photos
+- 🔐 **Authentication** - User accounts and privacy controls
+- 📁 **Album Management** - Organize photos in albums
 
-## Endpoints da API
+---
 
-- `POST /upload` - Upload de imagem e detecção de faces
-- `POST /identify` - Identifica uma face por nome
-- `GET /person/{person_id}` - Lista todas as fotos de uma pessoa
-- `GET /clusters` - Agrupa faces similares automaticamente
-- `GET /stats` - Estatísticas do banco
-- `DELETE /face/{face_id}` - Remove uma face
+## 🚀 Quick Start
 
-## Instalação
+### Prerequisites
+- Python 3.10+
+- Node.js 20+
+- PostgreSQL (or SQLite for development)
 
-1. Clone o repositório
-2. Crie um ambiente virtual:
+### Run Core API (FastAPI)
 ```bash
-python -m venv venv
-source venv/bin/activate  # No Windows: venv\Scripts\activate
-```
-
-3. Instale as dependências:
-```bash
+# Install dependencies
 pip install -r requirements.txt
+
+# Start Core API
+python -m uvicorn app.main_core:app --reload
+
+# Access:
+# - API: http://localhost:8000
+# - Interactive Docs: http://localhost:8000/docs
 ```
 
-4. Configure o banco de dados:
+### Run BFF (Next.js)
 ```bash
-python -m app.database
+cd frontend
+
+# Install dependencies
+npm install
+
+# Setup database
+npx prisma generate
+npx prisma db push
+
+# Start development server
+npm run dev
+
+# Access: http://localhost:3000
 ```
 
-5. Execute a API:
+### Run with Docker
 ```bash
-uvicorn app.main:app --reload
+docker-compose up --build
+
+# Core API: http://localhost:8000
+# BFF: http://localhost:3000
 ```
 
-A API estará disponível em `http://localhost:8000`
+---
 
-## Documentação
+## 📡 Architecture
 
-Acesse `http://localhost:8000/docs` para a documentação interativa (Swagger UI).
+```
+┌─────────────────┐         HTTP        ┌────────────────────┐
+│   Next.js BFF   │ ─────────────────→  │  FastAPI Core API  │
+│   (Port 3000)   │                     │   (Port 8000)      │
+├─────────────────┤                     ├────────────────────┤
+│ • Auth          │                     │ • Face Detection   │
+│ • Albums        │                     │ • Embeddings       │
+│ • Photos        │                     │ • Similarity       │
+│ • Users         │                     │ • Clustering       │
+│ • Business      │                     │ • Person Mgmt      │
+└─────────────────┘                     └────────────────────┘
+       ↓                                        ↓
+  PostgreSQL                               PostgreSQL
+   (BFF DB)                                (Core DB)
+```
 
-## Estrutura do Projeto
+**Why Microservices?**
+- Core API is reusable across different applications (web, mobile, desktop)
+- Services can scale independently
+- Clear separation of concerns
+- Easier to test and maintain
+
+---
+
+## 📚 Documentation
+
+- **[PROJECT_STATE.md](PROJECT_STATE.md)** - Current project state and detailed overview
+- **[QUICKSTART.md](QUICKSTART.md)** - Quick setup guide
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Detailed system architecture
+- **[API_EXAMPLES.md](API_EXAMPLES.md)** - API usage examples
+- **[TESTING_GUIDE.md](TESTING_GUIDE.md)** - Testing procedures
+- **[DOCKER_GUIDE.md](DOCKER_GUIDE.md)** - Docker setup and deployment
+- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Commands and quick reference
+- **[MIGRATION_GUIDE.md](MIGRATION_GUIDE.md)** - Database migration guide
+- **[DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md)** - Complete documentation index
+
+### Postman Collections
+- `Sietch_Faces_Core_API.postman_collection.json` - Core API endpoints
+- `Sietch_Faces_BFF_API.postman_collection.json` - BFF API endpoints
+- `Sietch_Faces_Local.postman_environment.json` - Local environment setup
+
+---
+
+## 🔧 Technology Stack
+
+### Backend
+- **FastAPI** - High-performance web framework
+- **RetinaFace** - Face detection
+- **ArcFace** - Face embeddings (via DeepFace)
+- **SQLAlchemy** - ORM
+- **PostgreSQL** - Database
+- **scikit-learn** - DBSCAN clustering
+
+### Frontend
+- **Next.js 15** - React framework with App Router
+- **NextAuth.js** - Authentication
+- **Prisma** - Type-safe ORM
+- **TypeScript** - Type safety
+- **Tailwind CSS** - Styling
+- **Radix UI** - Component primitives
+
+---
+
+## 📁 Project Structure
 
 ```
 sietch-faces/
-├── app/
-│   ├── main.py              # FastAPI app principal
-│   ├── config.py            # Configurações
-│   ├── database.py          # Configuração do banco
-│   ├── models.py            # Modelos SQLAlchemy
-│   ├── schemas.py           # Schemas Pydantic
-│   ├── face_detection.py    # RetinaFace detector
-│   ├── face_recognition.py  # ArcFace embeddings
-│   ├── clustering.py        # DBSCAN clustering
-│   └── routes/
-│       ├── upload.py
-│       ├── identify.py
-│       ├── person.py
-│       ├── clusters.py
-│       └── stats.py
-├── uploads/                 # Imagens uploaded
-├── models/                  # Modelos pré-treinados
-├── tests/                   # Testes
-├── requirements.txt
-└── README.md
+├── app/                      # FastAPI Core API
+│   ├── main_core.py         # Core API entry point
+│   ├── models_core.py       # Core database models
+│   ├── schemas_core.py      # Core API schemas
+│   ├── routes/
+│   │   └── core.py         # Core API endpoints
+│   ├── face_detection.py   # RetinaFace detector
+│   ├── face_recognition.py # ArcFace embeddings
+│   ├── clustering.py       # DBSCAN clustering
+│   └── services/           # Business logic
+├── frontend/                # Next.js BFF
+│   ├── app/                # App router
+│   ├── components/         # React components
+│   ├── lib/                # Utilities
+│   └── prisma/             # Database schema
+├── tests/                   # Tests
+├── uploads/                 # Uploaded images
+├── models/                  # Pre-trained AI models
+└── [docs]                  # Documentation files
 ```
 
-## Tecnologias
+---
 
-- **FastAPI** - Framework web
-- **RetinaFace** - Detecção de faces
-- **ArcFace** - Geração de embeddings
-- **SQLAlchemy** - ORM
-- **PostgreSQL/SQLite** - Banco de dados
-- **scikit-learn** - DBSCAN clustering
-- **NumPy** - Operações matemáticas
+## 🧪 Testing
+
+```bash
+# Test Core API
+curl http://localhost:8000/health
+curl -X POST http://localhost:8000/detect -F "file=@photo.jpg"
+
+# Run unit tests
+pytest tests/
+
+# Use Postman collections for comprehensive testing
+```
+
+See [TESTING_GUIDE.md](TESTING_GUIDE.md) for detailed testing procedures.
+
+---
+
+## 📋 Current Status
+
+**MVP Features:**
+- ✅ Core API with facial recognition
+- ✅ BFF database schema
+- ✅ Authentication structure
+- ✅ Docker setup
+- ✅ API documentation
+- ⏳ BFF API routes (in progress)
+- ⏳ Frontend UI (in progress)
+- 📋 Data migration (planned)
+- 📋 Production deployment (planned)
+
+See [PROJECT_STATE.md](PROJECT_STATE.md) for complete status and roadmap.
+
+---
+
+## 🤝 Contributing
+
+1. Read [ARCHITECTURE.md](ARCHITECTURE.md) for system design
+2. Check [TESTING_GUIDE.md](TESTING_GUIDE.md) for testing
+3. Use Postman collections for API testing
+4. Follow existing code patterns
+5. Run tests before committing
+
+---
+
+## 📝 License
+
+[Add license information]
+
+---
+
+## 📧 Contact
+
+[Add contact information]
+
+---
+
+**Note:** This is an MVP. The system is functional but may require additional features, testing, and optimization for production use.
