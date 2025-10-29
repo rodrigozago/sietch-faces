@@ -95,3 +95,24 @@ class Face(Base):
     
     def __repr__(self):
         return f"<Face(id={self.id}, person_id={self.person_id}, confidence={self.confidence:.2f})>"
+
+
+class ApiKey(Base):
+    """API keys used for internal service-to-service authentication"""
+    __tablename__ = "api_keys"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    prefix = Column(String(16), unique=True, index=True)
+    key_hash = Column(String, unique=True, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    is_admin = Column(Boolean, default=False, nullable=False)
+    rate_limit_per_minute = Column(Integer, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    last_used_at = Column(DateTime, nullable=True)
+    expires_at = Column(DateTime, nullable=True)
+    rotated_from_id = Column(Integer, ForeignKey("api_keys.id"), nullable=True)
+
+    def __repr__(self):
+        status = "active" if self.is_active else "revoked"
+        return f"<ApiKey(prefix={self.prefix}, name={self.name}, status={status})>"

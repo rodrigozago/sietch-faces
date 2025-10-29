@@ -8,10 +8,10 @@ import json
 from pathlib import Path
 
 BASE_URL = "http://localhost:8000"
-INTERNAL_API_KEY = "your-super-secret-internal-api-key-change-this"
+CORE_API_KEY = "your-super-secret-core-api-key-change-this"
 
 headers = {
-    "X-Internal-Token": INTERNAL_API_KEY
+    "X-API-Key": CORE_API_KEY
 }
 
 
@@ -253,7 +253,7 @@ def test_invalid_api_key():
     """Test with invalid API key"""
     print("\n🧪 Testing: Invalid API Key")
     
-    invalid_headers = {"X-Internal-Token": "wrong-key"}
+    invalid_headers = {"X-API-Key": "wrong-key"}
     
     response = requests.get(
         f"{BASE_URL}/internal/users/test/stats",

@@ -2,6 +2,7 @@ from sqlalchemy import create_engine, text, inspect
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from app.config import get_settings
+from app.services.api_key_service import ApiKeyService
 
 settings = get_settings()
 
@@ -120,12 +121,18 @@ def _ensure_faces_schema(conn):
 
 def init_db():
     """Initialize database tables"""
-    from app.models import Face, Person, User, Photo
+    from app.models import Face, Person, User, Photo, ApiKey
+    _ = ApiKey  # ensure model is registered before create_all
     Base.metadata.create_all(bind=engine)
 
     with engine.begin() as conn:
         _ensure_person_schema(conn)
         _ensure_faces_schema(conn)
+
+    # Ensure bootstrap API key exists for service-to-service authentication
+    with SessionLocal() as db:
+        service = ApiKeyService(db)
+        service.ensure_bootstrap_key(settings.core_api_bootstrap_key)
 
     print("Database initialized successfully!")
 

@@ -256,6 +256,47 @@ class EmailInvitationResponse(BaseModel):
     sent_to: EmailStr
 
 
+# ===== API KEY MANAGEMENT =====
+
+class ApiKeyBase(BaseModel):
+    name: str
+    rate_limit_per_minute: Optional[int] = None
+    is_admin: bool = False
+    expires_at: Optional[datetime] = None
+
+
+class ApiKeyCreateRequest(ApiKeyBase):
+    pass
+
+
+class ApiKeyRotateRequest(BaseModel):
+    rate_limit_per_minute: Optional[int] = None
+    expires_at: Optional[datetime] = None
+    revoke_old: bool = True
+
+
+class ApiKeyResponse(BaseModel):
+    prefix: str
+    name: str
+    is_admin: bool
+    is_active: bool
+    rate_limit_per_minute: Optional[int]
+    created_at: datetime
+    last_used_at: Optional[datetime]
+    expires_at: Optional[datetime]
+
+    class Config:
+        from_attributes = True
+
+
+class ApiKeyCreateResponse(ApiKeyResponse):
+    api_key: str
+
+
+class ApiKeyListResponse(BaseModel):
+    items: List[ApiKeyResponse]
+
+
 # Forward references
 UserWithPerson.model_rebuild()
 PersonWithFaces.model_rebuild()
