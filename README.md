@@ -98,16 +98,8 @@ docker-compose up --build
 
 ## 📚 Documentation
 
-- **[PROJECT_STATE.md](PROJECT_STATE.md)** - Current project state and detailed overview
-- **[QUICKSTART.md](QUICKSTART.md)** - Quick setup guide
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - Detailed system architecture
-- **[ARCHITECTURE_EVALUATION.md](ARCHITECTURE_EVALUATION.md)** - Architecture evaluation and recommendations ⭐
-- **[API_EXAMPLES.md](API_EXAMPLES.md)** - API usage examples
-- **[TESTING_GUIDE.md](TESTING_GUIDE.md)** - Testing procedures
-- **[DOCKER_GUIDE.md](DOCKER_GUIDE.md)** - Docker setup and deployment
-- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Commands and quick reference
-- **[MIGRATION_GUIDE.md](MIGRATION_GUIDE.md)** - Database migration guide
-- **[DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md)** - Complete documentation index
+- **[STORAGE_PROVIDER_EVALUATION.md](STORAGE_PROVIDER_EVALUATION.md)** - Storage provider evaluation (R2, S3, Google Drive) ⭐
 
 ### Postman Collections
 - `Sietch_Faces_Core_API.postman_collection.json` - Core API endpoints
