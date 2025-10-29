@@ -101,6 +101,7 @@ docker-compose up --build
 - **[PROJECT_STATE.md](PROJECT_STATE.md)** - Current project state and detailed overview
 - **[QUICKSTART.md](QUICKSTART.md)** - Quick setup guide
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - Detailed system architecture
+- **[ARCHITECTURE_EVALUATION.md](ARCHITECTURE_EVALUATION.md)** - Architecture evaluation and recommendations ⭐
 - **[API_EXAMPLES.md](API_EXAMPLES.md)** - API usage examples
 - **[TESTING_GUIDE.md](TESTING_GUIDE.md)** - Testing procedures
 - **[DOCKER_GUIDE.md](DOCKER_GUIDE.md)** - Docker setup and deployment
