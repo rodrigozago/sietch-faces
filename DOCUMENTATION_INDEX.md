@@ -1,27 +1,26 @@
 # 📚 Documentation Index
 
-**Sietch Faces v2.0.0 - Complete Documentation**
+**Sietch Faces v2.0.0 - Documentation Guide**
 
 ---
 
 ## 🎯 Start Here
 
-| Document | Purpose | Read Time | When to Use |
-|----------|---------|-----------|-------------|
-| **[EXECUTIVE_SUMMARY.md](EXECUTIVE_SUMMARY.md)** | High-level overview of the refactoring | 10 min | First time learning about the project |
-| **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** | Commands, URLs, and quick lookups | 2 min | Daily development reference |
-| **[TESTING_GUIDE.md](TESTING_GUIDE.md)** | Step-by-step testing procedures | 15 min | Testing and validation |
+| Document | Purpose | When to Use |
+|----------|---------|-------------|
+| **[README.md](README.md)** | Project overview and quick start | First time learning about the project |
+| **[PROJECT_STATE.md](PROJECT_STATE.md)** | Current state, status, and roadmap | Understanding project status and what's implemented |
+| **[QUICKSTART.md](QUICKSTART.md)** | Quick setup guide | Getting started quickly |
 
 ---
 
-## 📖 Detailed Documentation
+## 📖 Core Documentation
 
 ### Architecture & Design
 
-| Document | Lines | Purpose | Read Time |
-|----------|-------|---------|-----------|
-| **[ARCHITECTURE.md](ARCHITECTURE.md)** | 2,000+ | Complete system design, component responsibilities, communication flows, database strategies, deployment options | 45 min |
-| **[REFACTORING_SUMMARY.md](REFACTORING_SUMMARY.md)** | 800+ | Summary of architectural changes, communication flows, implementation phases | 20 min |
+| Document | Purpose |
+|----------|---------|
+| **[ARCHITECTURE.md](ARCHITECTURE.md)** | Complete system design, component responsibilities, communication flows, database strategies, deployment options |
 
 **When to read:**
 - 📐 Designing new features
@@ -38,32 +37,12 @@
 
 ---
 
-### Migration & Setup
-
-| Document | Lines | Purpose | Read Time |
-|----------|-------|---------|-----------|
-| **[MIGRATION_GUIDE.md](MIGRATION_GUIDE.md)** | 1,500+ | Step-by-step migration from old to new architecture with SQL scripts | 30 min |
-
-**When to read:**
-- 🔄 Migrating existing data
-- 🗄️ Understanding database changes
-- ⚠️ Troubleshooting migration issues
-- 📝 Planning data migration strategy
-
-**Key Topics:**
-- Before/after architecture comparison
-- Database schema changes
-- SQL migration scripts
-- Data migration strategies
-- Testing procedures
-
----
-
 ### API Documentation
 
-| Document | Lines | Purpose | Read Time |
-|----------|-------|---------|-----------|
-| **[POSTMAN_UPDATE_GUIDE.md](POSTMAN_UPDATE_GUIDE.md)** | 800+ | Complete API documentation for Core and BFF with examples | 25 min |
+| Document | Purpose |
+|----------|---------|
+| **[API_EXAMPLES.md](API_EXAMPLES.md)** | API endpoint examples and usage |
+| **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** | Commands, URLs, and quick lookups |
 
 **When to read:**
 - 📡 Learning available endpoints
@@ -71,171 +50,99 @@
 - 📝 Writing integration code
 - 🔍 Understanding request/response formats
 
-**Key Topics:**
-- Core API endpoints (22 endpoints)
-- BFF API endpoints (15 endpoints)
-- Request/response examples
-- Authentication flows
-
 **Postman Collections:**
-- `Sietch_Faces_Core_API.postman_collection.json` - Import to test Core API
-- `Sietch_Faces_BFF_API.postman_collection.json` - Import to test BFF API
+- `Sietch_Faces_Core_API.postman_collection.json` - Core API tests
+- `Sietch_Faces_BFF_API.postman_collection.json` - BFF API tests
+- `Sietch_Faces_Local.postman_environment.json` - Local environment
 
 ---
 
-### Testing & Validation
+### Testing & Deployment
 
-| Document | Lines | Purpose | Read Time |
-|----------|-------|---------|-----------|
-| **[TESTING_GUIDE.md](TESTING_GUIDE.md)** | 1,000+ | Complete testing workflow from unit to end-to-end | 30 min |
+| Document | Purpose |
+|----------|---------|
+| **[TESTING_GUIDE.md](TESTING_GUIDE.md)** | Complete testing workflow from unit to end-to-end |
+| **[DOCKER_GUIDE.md](DOCKER_GUIDE.md)** | Docker setup and deployment guide |
 
 **When to read:**
 - 🧪 Setting up testing environment
 - ✅ Validating implementations
 - 🐛 Debugging integration issues
+- 🐳 Setting up Docker containers
 - 📊 Running test scenarios
 
-**Key Topics:**
-- Phase 1: Core API testing (isolated)
-- Phase 2: BFF testing (with Core)
-- Phase 3: End-to-end integration
-- Multi-user photo sharing scenarios
-- Troubleshooting common issues
-
 ---
 
-### Quick Reference
+### Migration & Setup
 
-| Document | Lines | Purpose | Read Time |
-|----------|-------|---------|-----------|
-| **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** | 600+ | Commands, URLs, and quick lookups for daily development | 5 min |
+| Document | Purpose |
+|----------|---------|
+| **[MIGRATION_GUIDE.md](MIGRATION_GUIDE.md)** | Database migration from old to new architecture |
 
 **When to read:**
-- 💻 Starting development session
-- 🔍 Looking up command syntax
-- 🔗 Finding URLs and endpoints
-- 🗄️ Running database queries
-
-**Key Topics:**
-- Service startup commands
-- All API endpoints (quick reference)
-- Database queries
-- Environment variables
-- Debug commands
-
----
-
-## 🗂️ Code Files
-
-### Core API
-
-| File | Lines | Purpose |
-|------|-------|---------|
-| `app/models_core.py` | 60+ | Database models (Person, Face) |
-| `app/schemas_core.py` | 400+ | Pydantic schemas for all endpoints |
-| `app/routes/core.py` | 600+ | API endpoint implementations |
-| `app/main_core.py` | 40+ | FastAPI application entry point |
-
-**Status:** ✅ Complete - Ready to test
-
----
-
-### BFF
-
-| File | Lines | Purpose | Status |
-|------|-------|---------|--------|
-| `frontend/prisma/schema_bff.prisma` | 180+ | Database schema (User, Album, Photo, AlbumPhoto) | ✅ Complete |
-| `frontend/lib/core-api-client.ts` | - | HTTP client for Core API calls | ⏳ To implement |
-| `frontend/app/api/albums/route.ts` | - | Album management endpoints | ⏳ To implement |
-| `frontend/app/api/photos/upload/route.ts` | - | Photo upload with auto-association | ⏳ To implement |
+- 🔄 Migrating existing data
+- 🗄️ Understanding database changes
+- ⚠️ Troubleshooting migration issues
 
 ---
 
 ## 🎓 Learning Paths
 
-### 1. New to the Project (30 minutes)
+### 1. New to the Project (15 minutes)
 ```
-1. EXECUTIVE_SUMMARY.md     (10 min) - Understand what was built
-2. QUICK_REFERENCE.md       (5 min)  - Learn basic commands
-3. TESTING_GUIDE.md         (15 min) - Try testing Core API
-```
-
-### 2. Implementing New Features (1 hour)
-```
-1. ARCHITECTURE.md          (20 min) - Understand system design
-2. POSTMAN_UPDATE_GUIDE.md  (15 min) - Learn API contracts
-3. REFACTORING_SUMMARY.md   (15 min) - See implementation examples
-4. QUICK_REFERENCE.md       (10 min) - Reference during coding
+1. README.md              (5 min)  - Understand what the project is
+2. PROJECT_STATE.md       (5 min)  - See current status
+3. QUICKSTART.md          (5 min)  - Get it running
 ```
 
-### 3. Data Migration (45 minutes)
+### 2. Understanding the System (45 minutes)
 ```
-1. MIGRATION_GUIDE.md       (30 min) - Follow migration steps
-2. TESTING_GUIDE.md         (15 min) - Validate migrated data
+1. README.md              (5 min)  - Overview
+2. ARCHITECTURE.md        (20 min) - System design
+3. API_EXAMPLES.md        (10 min) - API usage
+4. TESTING_GUIDE.md       (10 min) - How to test
+```
+
+### 3. Development Setup (30 minutes)
+```
+1. QUICKSTART.md          (5 min)  - Basic setup
+2. DOCKER_GUIDE.md        (10 min) - Docker setup
+3. TESTING_GUIDE.md       (15 min) - Testing environment
 ```
 
 ### 4. Daily Development (5 minutes)
 ```
-1. QUICK_REFERENCE.md       (5 min)  - Look up commands/endpoints
+1. QUICK_REFERENCE.md     (5 min)  - Look up commands/endpoints
 ```
-
----
-
-## 📊 Documentation Statistics
-
-| Metric | Value |
-|--------|-------|
-| **Total Documentation Lines** | ~6,000 |
-| **Number of Documents** | 7 |
-| **Code Files (Complete)** | 4 (Core API) |
-| **Code Files (Pending)** | 3+ (BFF) |
-| **Postman Collections** | 2 |
-| **Total API Endpoints Documented** | 37 |
 
 ---
 
 ## 🔍 Find Information By Topic
 
-### Architecture & Design
-- **System Overview:** `EXECUTIVE_SUMMARY.md` → "Solution: Microservice Architecture"
-- **Component Responsibilities:** `ARCHITECTURE.md` → Section 2
-- **Communication Flows:** `REFACTORING_SUMMARY.md` → Section 3
-- **Database Design:** `ARCHITECTURE.md` → Section 3
+### Getting Started
+- **First time setup:** `QUICKSTART.md`
+- **Docker setup:** `DOCKER_GUIDE.md`
+- **Project overview:** `README.md`
 
-### Implementation
-- **Core API Code:** `app/models_core.py`, `app/schemas_core.py`, `app/routes/core.py`
-- **BFF Schema:** `frontend/prisma/schema_bff.prisma`
-- **Implementation Phases:** `REFACTORING_SUMMARY.md` → Section 5
-- **Code Examples:** `REFACTORING_SUMMARY.md` → Section 3
+### Architecture
+- **System overview:** `README.md` → Architecture section
+- **Detailed design:** `ARCHITECTURE.md`
+- **Current status:** `PROJECT_STATE.md`
 
-### Testing
-- **Quick Tests:** `QUICK_REFERENCE.md` → "Quick Test Workflow"
-- **Core API Tests:** `TESTING_GUIDE.md` → Phase 1
-- **BFF Integration Tests:** `TESTING_GUIDE.md` → Phase 2
-- **End-to-End Tests:** `TESTING_GUIDE.md` → Phase 3
-
-### API Reference
-- **Core Endpoints:** `POSTMAN_UPDATE_GUIDE.md` → "Core API Collection"
-- **BFF Endpoints:** `POSTMAN_UPDATE_GUIDE.md` → "BFF API Collection"
-- **Request Examples:** `QUICK_REFERENCE.md` → "Core/BFF API Endpoints"
-- **Postman Collections:** `Sietch_Faces_Core_API.postman_collection.json`, `Sietch_Faces_BFF_API.postman_collection.json`
-
-### Migration
-- **Migration Strategy:** `MIGRATION_GUIDE.md` → Section 2
-- **SQL Scripts:** `MIGRATION_GUIDE.md` → Section 4
-- **Before/After Comparison:** `MIGRATION_GUIDE.md` → Section 1
-- **Troubleshooting:** `TESTING_GUIDE.md` → "Troubleshooting"
+### Development
+- **API endpoints:** `API_EXAMPLES.md`, `QUICK_REFERENCE.md`
+- **Code structure:** `PROJECT_STATE.md` → Project Structure
+- **Testing:** `TESTING_GUIDE.md`
 
 ### Database
-- **Core Schema:** `app/models_core.py`
-- **BFF Schema:** `frontend/prisma/schema_bff.prisma`
-- **Database Queries:** `QUICK_REFERENCE.md` → "Database Commands"
-- **Data Model Diagrams:** `EXECUTIVE_SUMMARY.md` → "Data Model"
+- **Schema overview:** `PROJECT_STATE.md` → Database Schemas
+- **Migration:** `MIGRATION_GUIDE.md`
+- **Core models:** `app/models_core.py`
+- **BFF schema:** `frontend/prisma/schema.prisma`
 
 ### Deployment
-- **Deployment Strategies:** `ARCHITECTURE.md` → Section 6
-- **Environment Setup:** `TESTING_GUIDE.md` → "Pre-requisitos"
-- **Service Configuration:** `QUICK_REFERENCE.md` → "Environment Variables"
+- **Docker:** `DOCKER_GUIDE.md`
+- **Environment setup:** `QUICK_REFERENCE.md`
 
 ---
 
@@ -244,10 +151,16 @@
 ### I want to...
 
 **...understand the project**
-→ Read `EXECUTIVE_SUMMARY.md`
+→ Read `README.md` then `PROJECT_STATE.md`
 
-**...start testing**
-→ Follow `TESTING_GUIDE.md` Phase 1
+**...start developing**
+→ Follow `QUICKSTART.md`
+
+**...understand the architecture**
+→ Read `ARCHITECTURE.md`
+
+**...test the API**
+→ Use Postman collections + `API_EXAMPLES.md`
 
 **...look up a command**
 → Check `QUICK_REFERENCE.md`
@@ -255,17 +168,23 @@
 **...migrate data**
 → Follow `MIGRATION_GUIDE.md`
 
-**...implement a feature**
-→ Read `ARCHITECTURE.md` + `REFACTORING_SUMMARY.md`
+**...deploy with Docker**
+→ Follow `DOCKER_GUIDE.md`
 
-**...test an API endpoint**
-→ Import Postman collections + use `POSTMAN_UPDATE_GUIDE.md`
+**...run tests**
+→ Follow `TESTING_GUIDE.md`
 
-**...debug an issue**
-→ Check `TESTING_GUIDE.md` → "Troubleshooting"
+---
 
-**...understand data flow**
-→ Read `REFACTORING_SUMMARY.md` → "Communication Flows"
+## 📊 Documentation Statistics
+
+| Metric | Value |
+|--------|-------|
+| **Essential Documentation Files** | 9 |
+| **Postman Collections** | 2 |
+| **Total Lines (docs)** | ~2,500 |
+| **Code Files (Core API)** | 10+ |
+| **Code Files (BFF)** | 15+ |
 
 ---
 
@@ -275,24 +194,37 @@
 
 | Document | Update When |
 |----------|-------------|
+| `README.md` | Major changes to project structure or features |
+| `PROJECT_STATE.md` | Status changes, new features completed |
 | `ARCHITECTURE.md` | System design changes, new components added |
 | `MIGRATION_GUIDE.md` | Database schema changes |
-| `POSTMAN_UPDATE_GUIDE.md` | API endpoints added/modified |
+| `API_EXAMPLES.md` | API endpoints added/modified |
 | `TESTING_GUIDE.md` | New test scenarios, troubleshooting steps |
 | `QUICK_REFERENCE.md` | Commands change, new endpoints added |
-| `EXECUTIVE_SUMMARY.md` | Major architectural changes |
 
 ---
 
-## 🎯 Next Steps
+## 📚 All Documentation Files
 
-1. **Start with:** `EXECUTIVE_SUMMARY.md` - Get the big picture
-2. **Then read:** `QUICK_REFERENCE.md` - Learn basic commands
-3. **Then test:** `TESTING_GUIDE.md` Phase 1 - Test Core API
-4. **Then implement:** Use `ARCHITECTURE.md` + `REFACTORING_SUMMARY.md` as guides
+### Essential Docs
+- [README.md](README.md) - Main entry point
+- [PROJECT_STATE.md](PROJECT_STATE.md) - Current state and status
+- [QUICKSTART.md](QUICKSTART.md) - Quick setup guide
+- [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture
+- [API_EXAMPLES.md](API_EXAMPLES.md) - API usage examples
+- [TESTING_GUIDE.md](TESTING_GUIDE.md) - Testing procedures
+- [DOCKER_GUIDE.md](DOCKER_GUIDE.md) - Docker setup
+- [QUICK_REFERENCE.md](QUICK_REFERENCE.md) - Quick reference
+- [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) - Migration guide
+- [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md) - This file
+
+### Postman
+- Sietch_Faces_Core_API.postman_collection.json
+- Sietch_Faces_BFF_API.postman_collection.json
+- Sietch_Faces_Local.postman_environment.json
 
 ---
 
-**Last Updated:** January 3, 2025  
+**Last Updated:** October 29, 2025  
 **Documentation Version:** 2.0.0  
-**Project:** Sietch Faces
+**Project:** Sietch Faces MVP
