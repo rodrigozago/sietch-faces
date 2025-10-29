@@ -25,23 +25,23 @@ services:
       - sietch_network
 
   # Sietch Faces API (opcional - descomente para rodar API no Docker)
-  # api:
-  #   build: .
-  #   container_name: sietch_faces_api
-  #   restart: unless-stopped
-  #   environment:
-  #     DATABASE_URL: postgresql://sietch_user:sietch_password@postgres:5432/sietch_faces
-  #     UPLOAD_DIR: /app/uploads
-  #   ports:
-  #     - "8000:8000"
-  #   volumes:
-  #     - ./uploads:/app/uploads
-  #     - ./models:/app/models
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #   networks:
-  #     - sietch_network
+  api:
+    build: .
+    container_name: sietch_faces_api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://sietch_user:sietch_password@postgres:5432/sietch_faces
+      UPLOAD_DIR: /app/uploads
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./models:/app/models
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - sietch_network
 
   # pgAdmin - Database Management Interface
   # pgadmin:

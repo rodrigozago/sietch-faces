@@ -22,7 +22,7 @@ class User(Base):
     person_id = Column(Integer, ForeignKey("persons.id"), nullable=True)
     
     # Relationships
-    person = relationship("Person", back_populates="user", foreign_keys=[person_id])
+    person = relationship("Person", foreign_keys=[person_id], uselist=False)
     photos = relationship("Photo", back_populates="user", cascade="all, delete-orphan")
     
     def __repr__(self):
@@ -41,7 +41,6 @@ class Person(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
-    user = relationship("User", back_populates="person", foreign_keys=[user_id])
     faces = relationship("Face", back_populates="person", cascade="all, delete-orphan")
     
     def __repr__(self):
