@@ -21,12 +21,15 @@
 | Document | Purpose |
 |----------|---------|
 | **[ARCHITECTURE.md](ARCHITECTURE.md)** | Complete system design, component responsibilities, communication flows, database strategies, deployment options |
+| **[ARCHITECTURE_EVALUATION.md](ARCHITECTURE_EVALUATION.md)** | ⭐ Architecture evaluation, performance analysis, recommendations, and decision matrix |
 
 **When to read:**
 - 📐 Designing new features
 - 🔧 Understanding system interactions
 - 🚀 Planning deployment
 - 📊 Making architectural decisions
+- ✅ Evaluating performance and scalability
+- 🤔 Deciding between architecture alternatives
 
 **Key Topics:**
 - Microservice architecture pattern
@@ -34,6 +37,9 @@
 - Data synchronization strategies
 - Security model
 - Scalability considerations
+- Performance benchmarks and optimization
+- Database strategy comparison (two DBs vs one)
+- API architecture options
 
 ---
 
@@ -127,6 +133,7 @@
 ### Architecture
 - **System overview:** `README.md` → Architecture section
 - **Detailed design:** `ARCHITECTURE.md`
+- **Architecture evaluation:** `ARCHITECTURE_EVALUATION.md`
 - **Current status:** `PROJECT_STATE.md`
 
 ### Development
@@ -157,7 +164,7 @@
 → Follow `QUICKSTART.md`
 
 **...understand the architecture**
-→ Read `ARCHITECTURE.md`
+→ Read `ARCHITECTURE.md`, then review `ARCHITECTURE_EVALUATION.md` for detailed analysis
 
 **...test the API**
 → Use Postman collections + `API_EXAMPLES.md`
@@ -180,9 +187,9 @@
 
 | Metric | Value |
 |--------|-------|
-| **Essential Documentation Files** | 9 |
+| **Essential Documentation Files** | 10 |
 | **Postman Collections** | 2 |
-| **Total Lines (docs)** | ~2,500 |
+| **Total Lines (docs)** | ~3,500 |
 | **Code Files (Core API)** | 10+ |
 | **Code Files (BFF)** | 15+ |
 
@@ -197,6 +204,7 @@
 | `README.md` | Major changes to project structure or features |
 | `PROJECT_STATE.md` | Status changes, new features completed |
 | `ARCHITECTURE.md` | System design changes, new components added |
+| `ARCHITECTURE_EVALUATION.md` | Major architectural decisions or reevaluation |
 | `MIGRATION_GUIDE.md` | Database schema changes |
 | `API_EXAMPLES.md` | API endpoints added/modified |
 | `TESTING_GUIDE.md` | New test scenarios, troubleshooting steps |
@@ -211,6 +219,7 @@
 - [PROJECT_STATE.md](PROJECT_STATE.md) - Current state and status
 - [QUICKSTART.md](QUICKSTART.md) - Quick setup guide
 - [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture
+- [ARCHITECTURE_EVALUATION.md](ARCHITECTURE_EVALUATION.md) - Architecture evaluation and recommendations
 - [API_EXAMPLES.md](API_EXAMPLES.md) - API usage examples
 - [TESTING_GUIDE.md](TESTING_GUIDE.md) - Testing procedures
 - [DOCKER_GUIDE.md](DOCKER_GUIDE.md) - Docker setup
