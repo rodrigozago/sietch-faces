@@ -55,7 +55,8 @@ NEXTAUTH_SECRET="your-secret-key-here"  # Generate with: openssl rand -base64 32
 
 # FastAPI Backend
 FASTAPI_INTERNAL_URL="http://localhost:8000"
-INTERNAL_API_KEY="your-internal-api-key"  # Must match backend config
+CORE_API_KEY="your-core-api-key"  # Must match backend config
+CORE_API_KEY_HEADER="X-API-Key"
 
 # Frontend URL (for backend callbacks)
 NEXT_PUBLIC_API_URL="http://localhost:3000/api"
@@ -192,7 +193,8 @@ npx prisma db pull         # Pull schema from database
 | `NEXTAUTH_URL` | Frontend URL | `http://localhost:3000` |
 | `NEXTAUTH_SECRET` | NextAuth encryption key | Generate with OpenSSL |
 | `FASTAPI_INTERNAL_URL` | Backend API URL | `http://localhost:8000` |
-| `INTERNAL_API_KEY` | Internal API authentication | Must match backend |
+| `CORE_API_KEY` | Internal API authentication | Must match backend |
+| `CORE_API_KEY_HEADER` | API key header name | `X-API-Key` |
 | `NEXT_PUBLIC_API_URL` | Public API URL for client | `http://localhost:3000/api` |
 
 ## Connecting to Backend
@@ -201,7 +203,7 @@ The frontend communicates with FastAPI through:
 
 1. **API Client** (`lib/api-client.ts`): Axios instance with internal API key
 2. **API Routes** (`app/api/**`): Next.js routes that proxy to FastAPI
-3. **Internal Endpoints**: FastAPI endpoints protected by internal API key
+3. **Internal Endpoints**: FastAPI endpoints protected by API key authentication
 
 Example flow:
 ```
@@ -217,7 +219,7 @@ All TypeScript errors about missing modules are expected before running `npm ins
 Ensure PostgreSQL is running and `DATABASE_URL` matches backend database.
 
 ### Internal API Key Mismatch
-The `INTERNAL_API_KEY` in frontend `.env.local` must match `INTERNAL_API_KEY` in backend `app/config.py`.
+The `CORE_API_KEY` in frontend `.env.local` must match the API key registered in the backend.
 
 ### CORS Errors
 Not needed with BFF pattern - all requests go through Next.js API routes.

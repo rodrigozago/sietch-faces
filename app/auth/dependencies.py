@@ -1,28 +1,24 @@
 """
 FastAPI dependencies for authentication and authorization
 """
-from fastapi import Depends, HTTPException, Header, status
+from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from typing import Optional
 
 from app.database import get_db
-from app.models import User
-from app.auth.security import decode_access_token, verify_internal_api_key
+from app.models import User, ApiKey
+from app.auth.api_key import get_request_api_key
+from app.auth.security import decode_access_token
 from app.config import get_settings
 
 settings = get_settings()
 security = HTTPBearer(auto_error=False)
 
 
-def get_internal_api_key(x_internal_token: str = Header(...)) -> bool:
-    """Verify internal API key from Next.js"""
-    if not verify_internal_api_key(x_internal_token):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Invalid internal API key"
-        )
-    return True
+def get_internal_api_key(api_key: ApiKey = Depends(get_request_api_key)) -> ApiKey:
+    """Return the authenticated API key stored on the request context."""
+    return api_key
 
 
 async def get_current_user(

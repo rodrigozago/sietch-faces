@@ -1,16 +1,15 @@
 """
 Security utilities for authentication and authorization
 """
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from app.config import get_settings
 
-settings = get_settings()
-
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+settings = get_settings()
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -27,10 +26,12 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     """Create a JWT access token"""
     to_encode = data.copy()
     
+    now = datetime.now(timezone.utc)
+
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = now + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=settings.access_token_expire_minutes)
+        expire = now + timedelta(minutes=settings.access_token_expire_minutes)
     
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(
@@ -53,8 +54,3 @@ def decode_access_token(token: str) -> Optional[dict]:
         return payload
     except JWTError:
         return None
-
-
-def verify_internal_api_key(api_key: str) -> bool:
-    """Verify internal API key from Next.js"""
-    return api_key == settings.internal_api_key

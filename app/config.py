@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+from typing import Optional
 
 
 class Settings(BaseSettings):
@@ -25,7 +26,10 @@ class Settings(BaseSettings):
     debug: bool = True
     
     # Security Settings
-    internal_api_key: str = "change-this-in-production"
+    internal_api_key: Optional[str] = "change-this-in-production"
+    core_api_bootstrap_key: Optional[str] = "change-this-in-production"
+    core_api_key_header: str = "X-API-Key"
+    core_api_rate_limit_per_minute: int = 1000
     jwt_secret_key: str = "change-this-jwt-secret"
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
@@ -43,6 +47,10 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = False
+
+    def model_post_init(self, __context) -> None:  # type: ignore[override]
+        if not self.core_api_bootstrap_key and self.internal_api_key:
+            self.core_api_bootstrap_key = self.internal_api_key
 
 
 @lru_cache()

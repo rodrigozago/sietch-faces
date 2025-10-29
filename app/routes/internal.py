@@ -2,33 +2,65 @@
 Internal API endpoints for Next.js BFF communication.
 These endpoints require internal API key authentication.
 """
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
 from sqlalchemy.orm import Session
 from typing import Optional, List
+import asyncio
 import base64
 import io
+import os
 import uuid
 from PIL import Image
 
 from app.database import get_db
+from app.config import get_settings
+from app.auth.api_key import require_api_key
 from app.auth.dependencies import get_internal_api_key
 from app.auth.security import get_password_hash, verify_password
-from app.models import User, Person, Photo, Face
+from app.models import User, Person, Photo, Face, ApiKey
 from app.schemas_v2 import (
     UserCreate, UserResponse, TokenData,
     PhotoResponse, PhotoWithFaces,
-    UnclaimedMatch, ClaimPersonRequest, ClaimPersonResponse
+    UnclaimedMatch, ClaimPersonRequest, ClaimPersonResponse,
+    ApiKeyCreateRequest, ApiKeyCreateResponse, ApiKeyResponse,
+    ApiKeyListResponse, ApiKeyRotateRequest
 )
 from app.face_detection import FaceDetector
 from app.face_recognition import FaceRecognizer
 from app.services.face_matching import FaceMatchingService, MatchConfidence
 from app.services.claim_service import ClaimService
+from app.services.api_key_service import ApiKeyService
 
-router = APIRouter(prefix="/internal", tags=["internal"])
+router = APIRouter(
+    prefix="/internal",
+    tags=["internal"],
+    dependencies=[Depends(require_api_key)]
+)
 
 # Initialize face processing services
 face_detector = FaceDetector()
 face_recognizer = FaceRecognizer()
+settings = get_settings()
+
+USER_NOT_FOUND_MESSAGE = "User not found"
+ADMIN_PRIVILEGES_REQUIRED = "Admin API key required"
+
+
+def _require_admin_key(api_key: ApiKey) -> None:
+    if not api_key.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=ADMIN_PRIVILEGES_REQUIRED
+        )
+
+
+async def _write_file_async(path: str, data: bytes) -> None:
+    await asyncio.to_thread(_write_bytes, path, data)
+
+
+def _write_bytes(path: str, data: bytes) -> None:
+    with open(path, "wb") as file_handle:
+        file_handle.write(data)
 
 
 @router.post("/auth/register", response_model=UserResponse)
@@ -37,8 +69,7 @@ async def register_with_face(
     username: str = Form(...),
     password: str = Form(...),
     face_image_base64: str = Form(...),
-    db: Session = Depends(get_db),
-    _: str = Depends(get_internal_api_key)
+    db: Session = Depends(get_db)
 ):
     """
     Register a new user with face verification.
@@ -153,8 +184,7 @@ async def validate_credentials(
     email: str = Form(...),
     password: str = Form(...),
     face_image_base64: Optional[str] = Form(None),
-    db: Session = Depends(get_db),
-    _: str = Depends(get_internal_api_key)
+    db: Session = Depends(get_db)
 ):
     """
     Validate user credentials and optionally verify face.
@@ -195,8 +225,6 @@ async def validate_credentials(
             if user.person_id:
                 person = db.query(Person).filter(Person.id == user.person_id).first()
                 if person:
-                    known_faces = db.query(Face).filter(Face.person_id == person.id).all()
-                    
                     # Check similarity with any known face
                     face_matching_service = FaceMatchingService(db)
                     matches = face_matching_service.find_similar_faces(
@@ -232,8 +260,7 @@ async def validate_credentials(
 async def process_photo(
     file: UploadFile = File(...),
     user_id: str = Form(...),
-    db: Session = Depends(get_db),
-    _: str = Depends(get_internal_api_key)
+    db: Session = Depends(get_db)
 ):
     """
     Process uploaded photo: save file, detect faces, generate embeddings, match to persons.
@@ -241,7 +268,7 @@ async def process_photo(
     # Verify user exists
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    raise HTTPException(status_code=404, detail=USER_NOT_FOUND_MESSAGE)
     
     # Save uploaded file
     file_extension = file.filename.split('.')[-1].lower()
@@ -252,8 +279,7 @@ async def process_photo(
     
     try:
         contents = await file.read()
-        with open(file_path, 'wb') as f:
-            f.write(contents)
+        await _write_file_async(file_path, contents)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to save file: {str(e)}")
     
@@ -342,15 +368,14 @@ async def process_photo(
 @router.get("/users/{user_id}/photos")
 async def get_user_photos(
     user_id: str,
-    db: Session = Depends(get_db),
-    _: str = Depends(get_internal_api_key)
+    db: Session = Depends(get_db)
 ):
     """
     Get all photos where user is uploader OR photo contains user's face.
     """
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    raise HTTPException(status_code=404, detail=USER_NOT_FOUND_MESSAGE)
     
     # Photos uploaded by user
     uploaded_photos = db.query(Photo).filter(Photo.user_id == user_id).all()
@@ -386,15 +411,14 @@ async def get_user_photos(
 @router.get("/users/{user_id}/faces")
 async def get_user_faces(
     user_id: str,
-    db: Session = Depends(get_db),
-    _: str = Depends(get_internal_api_key)
+    db: Session = Depends(get_db)
 ):
     """
     Get all faces of the user.
     """
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    raise HTTPException(status_code=404, detail=USER_NOT_FOUND_MESSAGE)
     
     if not user.person_id:
         return {"faces": []}
@@ -423,15 +447,14 @@ async def get_user_faces(
 @router.get("/users/{user_id}/unclaimed-matches", response_model=List[UnclaimedMatch])
 async def get_unclaimed_matches(
     user_id: str,
-    db: Session = Depends(get_db),
-    _: str = Depends(get_internal_api_key)
+    db: Session = Depends(get_db)
 ):
     """
     Get potential unclaimed person matches for the user.
     """
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    raise HTTPException(status_code=404, detail=USER_NOT_FOUND_MESSAGE)
     
     face_matching_service = FaceMatchingService(db)
     matches = face_matching_service.find_unclaimed_matches(user_id)
@@ -451,15 +474,14 @@ async def get_unclaimed_matches(
 async def claim_persons(
     user_id: str,
     request: ClaimPersonRequest,
-    db: Session = Depends(get_db),
-    _: str = Depends(get_internal_api_key)
+    db: Session = Depends(get_db)
 ):
     """
     Claim person clusters as belonging to the user.
     """
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    raise HTTPException(status_code=404, detail=USER_NOT_FOUND_MESSAGE)
     
     claim_service = ClaimService(db)
     result = claim_service.claim_persons(user_id, request.person_ids)
@@ -474,15 +496,14 @@ async def claim_persons(
 @router.get("/users/{user_id}/stats")
 async def get_user_stats(
     user_id: str,
-    db: Session = Depends(get_db),
-    _: str = Depends(get_internal_api_key)
+    db: Session = Depends(get_db)
 ):
     """
     Get user statistics: total photos, faces, people detected, etc.
     """
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    raise HTTPException(status_code=404, detail=USER_NOT_FOUND_MESSAGE)
     
     # Count photos uploaded by user
     total_photos = db.query(Photo).filter(Photo.user_id == user_id).count()
@@ -524,3 +545,74 @@ async def get_user_stats(
             for photo in recent_photos
         ]
     }
+
+
+@router.get("/api-keys", response_model=ApiKeyListResponse)
+async def list_api_keys(
+    db: Session = Depends(get_db),
+    api_key: ApiKey = Depends(get_internal_api_key)
+):
+    _require_admin_key(api_key)
+    service = ApiKeyService(db)
+    keys = service.list_api_keys()
+    return ApiKeyListResponse(
+        items=[ApiKeyResponse.model_validate(key) for key in keys]
+    )
+
+
+@router.post("/api-keys", response_model=ApiKeyCreateResponse, status_code=status.HTTP_201_CREATED)
+async def create_api_key(
+    payload: ApiKeyCreateRequest,
+    db: Session = Depends(get_db),
+    api_key: ApiKey = Depends(get_internal_api_key)
+):
+    _require_admin_key(api_key)
+    service = ApiKeyService(db)
+    rate_limit = payload.rate_limit_per_minute or settings.core_api_rate_limit_per_minute
+    raw_key, record = service.create_api_key(
+        name=payload.name,
+        is_admin=payload.is_admin,
+        rate_limit_per_minute=rate_limit,
+        expires_at=payload.expires_at,
+    )
+    response_data = ApiKeyResponse.model_validate(record).model_dump()
+    return ApiKeyCreateResponse(api_key=raw_key, **response_data)
+
+
+@router.post("/api-keys/{prefix}/rotate", response_model=ApiKeyCreateResponse)
+async def rotate_api_key(
+    prefix: str,
+    payload: ApiKeyRotateRequest,
+    db: Session = Depends(get_db),
+    api_key: ApiKey = Depends(get_internal_api_key)
+):
+    _require_admin_key(api_key)
+    service = ApiKeyService(db)
+    try:
+        raw_key, new_key, _ = service.rotate_api_key(
+            prefix,
+            rate_limit_per_minute=payload.rate_limit_per_minute,
+            expires_at=payload.expires_at,
+            revoke_old=payload.revoke_old,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+    response_data = ApiKeyResponse.model_validate(new_key).model_dump()
+    return ApiKeyCreateResponse(api_key=raw_key, **response_data)
+
+
+@router.delete("/api-keys/{prefix}", response_model=ApiKeyResponse)
+async def revoke_api_key(
+    prefix: str,
+    db: Session = Depends(get_db),
+    api_key: ApiKey = Depends(get_internal_api_key)
+):
+    _require_admin_key(api_key)
+    service = ApiKeyService(db)
+    try:
+        record = service.revoke_api_key(prefix)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+    return ApiKeyResponse.model_validate(record)

@@ -4,7 +4,8 @@ from sqlalchemy.orm import Session
 import os
 
 from app.config import get_settings
-from app.database import get_db, init_db
+from app.database import init_db
+from app.auth.api_key import require_api_key
 from app.routes import upload, identify, person, clusters, stats, internal
 
 settings = get_settings()
@@ -38,7 +39,7 @@ async def startup_event():
 
 
 # Root endpoint
-@app.get("/")
+@app.get("/", dependencies=[Depends(require_api_key)])
 async def root():
     return {
         "message": "Sietch Faces API",
@@ -48,18 +49,20 @@ async def root():
 
 
 # Health check
-@app.get("/health")
+@app.get("/health", dependencies=[Depends(require_api_key)])
 async def health_check():
     return {"status": "healthy"}
 
 
 # Include routers
-app.include_router(upload.router, prefix="/upload", tags=["Upload"])
-app.include_router(identify.router, prefix="/identify", tags=["Identify"])
-app.include_router(person.router, prefix="/person", tags=["Person"])
-app.include_router(clusters.router, prefix="/clusters", tags=["Clusters"])
-app.include_router(stats.router, prefix="/stats", tags=["Statistics"])
-app.include_router(internal.router, tags=["Internal"])  # No prefix, already has /internal
+secured_dependencies = [Depends(require_api_key)]
+
+app.include_router(upload.router, prefix="/upload", tags=["Upload"], dependencies=secured_dependencies)
+app.include_router(identify.router, prefix="/identify", tags=["Identify"], dependencies=secured_dependencies)
+app.include_router(person.router, prefix="/person", tags=["Person"], dependencies=secured_dependencies)
+app.include_router(clusters.router, prefix="/clusters", tags=["Clusters"], dependencies=secured_dependencies)
+app.include_router(stats.router, prefix="/stats", tags=["Statistics"], dependencies=secured_dependencies)
+app.include_router(internal.router, tags=["Internal"])  # Router already secured
 
 
 if __name__ == "__main__":

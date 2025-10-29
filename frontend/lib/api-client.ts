@@ -1,7 +1,8 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios'
 
 const FASTAPI_URL = process.env.FASTAPI_INTERNAL_URL || 'http://localhost:8000'
-const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || ''
+const CORE_API_KEY = process.env.CORE_API_KEY || process.env.INTERNAL_API_KEY || ''
+const CORE_API_KEY_HEADER = process.env.CORE_API_KEY_HEADER || 'X-API-Key'
 
 export interface FastAPIResponse<T = any> {
   data?: T
@@ -10,14 +11,14 @@ export interface FastAPIResponse<T = any> {
 }
 
 class FastAPIClient {
-  private client: AxiosInstance
+  private readonly client: AxiosInstance
 
   constructor() {
     this.client = axios.create({
       baseURL: FASTAPI_URL,
       headers: {
         'Content-Type': 'application/json',
-        'X-Internal-Token': INTERNAL_API_KEY,
+        [CORE_API_KEY_HEADER]: CORE_API_KEY,
       },
       timeout: 30000, // 30 seconds
     })
@@ -76,15 +77,15 @@ class FastAPIClient {
       formData.append('file', file)
 
       if (additionalData) {
-        Object.entries(additionalData).forEach(([key, value]) => {
+        for (const [key, value] of Object.entries(additionalData)) {
           formData.append(key, String(value))
-        })
+        }
       }
 
       const response = await this.client.post(endpoint, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
-          'X-Internal-Token': INTERNAL_API_KEY,
+          [CORE_API_KEY_HEADER]: CORE_API_KEY,
         },
       })
 
