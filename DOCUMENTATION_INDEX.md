@@ -22,6 +22,7 @@
 |----------|---------|
 | **[ARCHITECTURE.md](ARCHITECTURE.md)** | Complete system design, component responsibilities, communication flows, database strategies, deployment options |
 | **[ARCHITECTURE_EVALUATION.md](ARCHITECTURE_EVALUATION.md)** | ⭐ Architecture evaluation, performance analysis, recommendations, and decision matrix |
+| **[STORAGE_PROVIDER_EVALUATION.md](STORAGE_PROVIDER_EVALUATION.md)** | ⭐ Storage provider evaluation for uploaded images (Cloudflare R2, S3, Google Drive) |
 
 **When to read:**
 - 📐 Designing new features
@@ -30,6 +31,7 @@
 - 📊 Making architectural decisions
 - ✅ Evaluating performance and scalability
 - 🤔 Deciding between architecture alternatives
+- 🗄️ Choosing storage solutions for images
 
 **Key Topics:**
 - Microservice architecture pattern
@@ -40,6 +42,7 @@
 - Performance benchmarks and optimization
 - Database strategy comparison (two DBs vs one)
 - API architecture options
+- Storage provider comparison (R2 vs S3 vs Google Drive)
 
 ---
 
@@ -166,6 +169,9 @@
 **...understand the architecture**
 → Read `ARCHITECTURE.md`, then review `ARCHITECTURE_EVALUATION.md` for detailed analysis
 
+**...choose a storage provider**
+→ Read `STORAGE_PROVIDER_EVALUATION.md` for comprehensive comparison
+
 **...test the API**
 → Use Postman collections + `API_EXAMPLES.md`
 
@@ -187,9 +193,9 @@
 
 | Metric | Value |
 |--------|-------|
-| **Essential Documentation Files** | 10 |
+| **Essential Documentation Files** | 11 |
 | **Postman Collections** | 2 |
-| **Total Lines (docs)** | ~3,500 |
+| **Total Lines (docs)** | ~4,000 |
 | **Code Files (Core API)** | 10+ |
 | **Code Files (BFF)** | 15+ |
 
@@ -205,6 +211,7 @@
 | `PROJECT_STATE.md` | Status changes, new features completed |
 | `ARCHITECTURE.md` | System design changes, new components added |
 | `ARCHITECTURE_EVALUATION.md` | Major architectural decisions or reevaluation |
+| `STORAGE_PROVIDER_EVALUATION.md` | Storage requirements change, new providers considered |
 | `MIGRATION_GUIDE.md` | Database schema changes |
 | `API_EXAMPLES.md` | API endpoints added/modified |
 | `TESTING_GUIDE.md` | New test scenarios, troubleshooting steps |
@@ -220,6 +227,7 @@
 - [QUICKSTART.md](QUICKSTART.md) - Quick setup guide
 - [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture
 - [ARCHITECTURE_EVALUATION.md](ARCHITECTURE_EVALUATION.md) - Architecture evaluation and recommendations
+- [STORAGE_PROVIDER_EVALUATION.md](STORAGE_PROVIDER_EVALUATION.md) - Storage provider comparison and recommendations
 - [API_EXAMPLES.md](API_EXAMPLES.md) - API usage examples
 - [TESTING_GUIDE.md](TESTING_GUIDE.md) - Testing procedures
 - [DOCKER_GUIDE.md](DOCKER_GUIDE.md) - Docker setup
