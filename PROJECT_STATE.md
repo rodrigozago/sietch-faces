@@ -48,17 +48,20 @@ Sietch Faces is a facial recognition and photo management system with a microser
 ```
 sietch-faces/
 ├── app/                      # FastAPI Core API
-│   ├── main.py              # Original monolith entry
-│   ├── main_core.py         # Core API microservice entry
-│   ├── models.py            # Original models
-│   ├── models_core.py       # Core API models
-│   ├── schemas.py           # Original schemas
-│   ├── schemas_core.py      # Core API schemas
+│   ├── main.py              # Original monolith entry (legacy)
+│   ├── main_core.py         # Core API microservice entry (current)
+│   ├── models.py            # Original models (legacy)
+│   ├── models_core.py       # Core API models (current)
+│   ├── schemas.py           # Original schemas (legacy)
+│   ├── schemas_core.py      # Core API schemas (current)
+│   ├── schemas_v2.py        # Additional schemas
+│   ├── database.py          # Original database (legacy)
+│   ├── database_core.py     # Core API database (current)
 │   ├── auth/                # Authentication logic
 │   ├── routes/              # API endpoints
-│   │   ├── core.py         # Core API endpoints
+│   │   ├── core.py         # Core API endpoints (current)
 │   │   ├── internal.py     # Internal endpoints
-│   │   └── [others]        # Original routes
+│   │   └── [others]        # Original routes (legacy)
 │   └── services/            # Business logic services
 ├── frontend/                # Next.js BFF
 │   ├── app/                # App router
@@ -69,8 +72,14 @@ sietch-faces/
 ├── uploads/                 # Uploaded images
 ├── models/                  # Pre-trained AI models cache
 ├── requirements.txt         # Python dependencies
+├── requirements-dev.txt     # Development dependencies
+├── verify_setup.py          # Setup verification script
+├── reset_database.py        # Database reset utility
 └── [documentation files]    # See below
 ```
+
+**Note on Dual Architecture:**
+The project contains both the original monolithic version (main.py, models.py, etc.) and the new microservice architecture (main_core.py, models_core.py, etc.). The microservice version is the current/recommended approach. The legacy files are kept for reference and potential migration needs.
 
 ---
 
@@ -237,12 +246,23 @@ Many documentation files were created during development phases (PHASE_2_*, PROJ
 - ✅ Dependencies (requirements.txt, package.json)
 
 ### Files to Clean Up
-- 🔄 Duplicate READMEs (README_NEW.md, README_V2.md)
-- 🔄 Development phase docs (PHASE_*.md, PROJECT_COMPLETE.md, etc.)
-- 🔄 Temporary database backups (sietch_faces.db.backup)
-- 🔄 Legacy scripts if any
+- ✅ Removed 26 redundant documentation files
+- ✅ Removed database backup (sietch_faces.db.backup)
+- ⚠️ Legacy code files kept for reference:
+  - `app/main.py` - Original monolith (use `main_core.py` instead)
+  - `app/models.py` - Original models (use `models_core.py` instead)
+  - `app/schemas.py` - Original schemas (use `schemas_core.py` instead)
+  - `app/database.py` - Original database (use `database_core.py` instead)
+  - `app/routes/upload.py`, `identify.py`, `person.py`, etc. - Original routes (use `routes/core.py` instead)
+- ✅ Utility scripts kept (useful for development):
+  - `verify_setup.py` - Setup verification
+  - `reset_database.py` - Database reset
+  - `test_internal_api.py` - Internal API testing
+
+**Recommendation:** Legacy files can be moved to an `archive/` directory or removed once the migration to microservices is complete and tested.
 
 ### Recommended .gitignore Additions
+✅ Already updated with:
 ```
 # Temporary files
 /tmp/
@@ -270,29 +290,37 @@ models/*
 # Database
 *.db
 *.sqlite
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
 ```
 
 ---
 
 ## 🎯 Next Steps
 
-### Immediate
-1. Clean up redundant documentation
-2. Consolidate essential docs
-3. Remove duplicate files
-4. Update .gitignore
+### Immediate (Completed ✅)
+1. ✅ Clean up redundant documentation (26 files removed)
+2. ✅ Consolidate essential docs (10 core docs remain)
+3. ✅ Remove duplicate files (README_NEW.md, README_V2.md, etc.)
+4. ✅ Update .gitignore
+5. ✅ Create PROJECT_STATE.md for current status
 
 ### Short Term
 1. Complete BFF API routes implementation
 2. Build frontend UI components
 3. Integrate end-to-end workflow
 4. Add comprehensive tests
+5. Consider archiving or removing legacy code files
 
 ### Medium Term
 1. Data migration from old schema
 2. Performance optimization
 3. Production deployment setup
 4. User documentation
+5. Complete migration to microservice architecture
 
 ---
 
