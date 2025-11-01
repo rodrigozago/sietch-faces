@@ -201,7 +201,6 @@ class ApiKeyService:
         return secrets.token_hex(8)[:8]
 
     def _generate_prefix_from_hash(self, raw_key: str) -> str:
+        """Generate a prefix from the hash of the raw key."""
         digest = self._hash_key(raw_key)
         return digest[:8]
-
-*** End of File***

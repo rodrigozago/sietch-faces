@@ -98,6 +98,12 @@ docker-compose up --build
 
 ## 📚 Documentation
 
+### API Code Documentation
+- **Generate API docs**: Run `python generate_docs.py` to create HTML documentation from code
+- **Interactive API docs**: Visit `/docs` when running the API for Swagger UI
+- **ReDoc**: Visit `/redoc` for alternative API documentation
+
+### Project Documentation
 - **[PROJECT_STATE.md](PROJECT_STATE.md)** - Current project state and detailed overview
 - **[QUICKSTART.md](QUICKSTART.md)** - Quick setup guide
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - Detailed system architecture

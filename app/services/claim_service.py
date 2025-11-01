@@ -1,17 +1,46 @@
 """
-Service for claiming unclaimed persons and managing user-person relationships
+Service for claiming unclaimed persons and managing user-person relationships.
+
+This module handles:
+- Claiming unclaimed persons for users
+- Merging duplicate persons
+- Transferring persons between users
+- Finding photos where a user appears
 """
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
+import logging
 
 from app.models import User, Person, Face, Photo
 from app.services.face_matching import FaceMatchingService
 
+logger = logging.getLogger(__name__)
+
 
 class ClaimService:
-    """Service for managing person claims"""
+    """
+    Service for managing person claims and user-person relationships.
+    
+    This service provides functionality for users to claim faces detected
+    in photos as belonging to them, merge duplicate persons, and manage
+    the association between users and their person entities.
+    
+    Attributes:
+        db (Session): SQLAlchemy database session.
+        matching_service (FaceMatchingService): Service for face matching operations.
+        
+    Example:
+        >>> service = ClaimService(db)
+        >>> result = service.claim_persons(user, [person_id1, person_id2])
+    """
     
     def __init__(self, db: Session):
+        """
+        Initialize ClaimService with database session.
+        
+        Args:
+            db (Session): SQLAlchemy database session for queries.
+        """
         self.db = db
         self.matching_service = FaceMatchingService(db)
     

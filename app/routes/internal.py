@@ -268,7 +268,7 @@ async def process_photo(
     # Verify user exists
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
-    raise HTTPException(status_code=404, detail=USER_NOT_FOUND_MESSAGE)
+        raise HTTPException(status_code=404, detail=USER_NOT_FOUND_MESSAGE)
     
     # Save uploaded file
     file_extension = file.filename.split('.')[-1].lower()
@@ -375,7 +375,7 @@ async def get_user_photos(
     """
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
-    raise HTTPException(status_code=404, detail=USER_NOT_FOUND_MESSAGE)
+        raise HTTPException(status_code=404, detail=USER_NOT_FOUND_MESSAGE)
     
     # Photos uploaded by user
     uploaded_photos = db.query(Photo).filter(Photo.user_id == user_id).all()
@@ -418,7 +418,7 @@ async def get_user_faces(
     """
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
-    raise HTTPException(status_code=404, detail=USER_NOT_FOUND_MESSAGE)
+        raise HTTPException(status_code=404, detail=USER_NOT_FOUND_MESSAGE)
     
     if not user.person_id:
         return {"faces": []}
@@ -454,7 +454,7 @@ async def get_unclaimed_matches(
     """
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
-    raise HTTPException(status_code=404, detail=USER_NOT_FOUND_MESSAGE)
+        raise HTTPException(status_code=404, detail=USER_NOT_FOUND_MESSAGE)
     
     face_matching_service = FaceMatchingService(db)
     matches = face_matching_service.find_unclaimed_matches(user_id)
@@ -481,7 +481,7 @@ async def claim_persons(
     """
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
-    raise HTTPException(status_code=404, detail=USER_NOT_FOUND_MESSAGE)
+        raise HTTPException(status_code=404, detail=USER_NOT_FOUND_MESSAGE)
     
     claim_service = ClaimService(db)
     result = claim_service.claim_persons(user_id, request.person_ids)
@@ -503,7 +503,7 @@ async def get_user_stats(
     """
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
-    raise HTTPException(status_code=404, detail=USER_NOT_FOUND_MESSAGE)
+        raise HTTPException(status_code=404, detail=USER_NOT_FOUND_MESSAGE)
     
     # Count photos uploaded by user
     total_photos = db.query(Photo).filter(Photo.user_id == user_id).count()
