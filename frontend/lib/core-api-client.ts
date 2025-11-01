@@ -110,6 +110,32 @@ export interface HealthResponse {
 }
 
 // ============================================================================
+// Error Classes
+// ============================================================================
+
+/**
+ * Custom error class for Core API errors with status code
+ */
+class CoreAPIError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+    public readonly operation: string
+  ) {
+    super(message);
+    this.name = 'CoreAPIError';
+  }
+
+  isClientError(): boolean {
+    return this.status >= 400 && this.status < 500;
+  }
+
+  isServerError(): boolean {
+    return this.status >= 500;
+  }
+}
+
+// ============================================================================
 // Utility Functions
 // ============================================================================
 
@@ -164,8 +190,8 @@ async function retryWithBackoff<T>(
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
 
-      // Don't retry on 4xx errors (client errors)
-      if (error instanceof Error && error.message.includes('status 4')) {
+      // Don't retry on 4xx errors (client errors) - they won't be fixed by retrying
+      if (error instanceof CoreAPIError && error.isClientError()) {
         throw error;
       }
 
@@ -211,9 +237,7 @@ class CoreAPIClient {
         if (!response.ok) {
           const error = await response.json().catch(() => ({}));
           const errorMessage = error.detail || `${operation} failed: ${response.statusText}`;
-          const statusError = new Error(errorMessage);
-          (statusError as any).status = response.status;
-          throw statusError;
+          throw new CoreAPIError(errorMessage, response.status, operation);
         }
 
         return response;

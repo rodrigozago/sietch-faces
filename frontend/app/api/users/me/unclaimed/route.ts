@@ -84,18 +84,22 @@ export async function GET(request: NextRequest) {
       avgSimilarity: number;
     }> = [];
 
-    // Note: This is a simplified implementation
-    // Full similarity comparison would require embeddings which are not returned by listFaces
-    // For now, we'll return unclaimed persons with face counts
+    // TODO: Implement proper similarity comparison
+    // This is a simplified implementation that returns all unclaimed persons
+    // Full implementation would require:
+    // 1. Core API to return embeddings when listing faces, OR
+    // 2. New Core API endpoint to compare face similarity by ID, OR
+    // 3. Store embeddings in BFF database during photo upload
+    // For now, return unclaimed persons with face counts only
     for (const person of unclaimedPersons) {
       // Get faces for this person
       const personFaces = await coreAPI.listFaces(person.id);
 
       if (personFaces.length === 0) continue;
 
-      // For now, just include all unclaimed persons with faces
-      // In a full implementation, would compare embeddings
-      const similarities: number[] = [0.7]; // Placeholder similarity
+      // Placeholder similarity - all unclaimed persons returned
+      // Real implementation would calculate actual similarity scores
+      const similarities: number[] = [0.7]; // TODO: Calculate real similarity
 
       if (similarities.length > 0) {
         const maxSimilarity = Math.max(...similarities);

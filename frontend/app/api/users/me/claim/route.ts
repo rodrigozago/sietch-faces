@@ -81,6 +81,7 @@ export async function POST(request: NextRequest) {
     console.log(`[Claim] Found ${totalFacesClaimed} faces to claim`);
 
     // Merge persons in Core API
+    // Note: user.corePersonId is guaranteed to exist due to check on line 36-38
     const mergeResult = await coreAPI.mergePersons(personIds, user.corePersonId!, keepName);
 
     console.log(`[Claim] Merged persons in Core: ${mergeResult.deleted_person_ids.length} persons, ${mergeResult.faces_transferred} faces`);
