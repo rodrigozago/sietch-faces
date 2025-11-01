@@ -1,6 +1,16 @@
 import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import { authAPI } from './api-client'
+import { prisma } from './prisma'
+import bcrypt from 'bcryptjs'
+
+// Validate required environment variables
+if (!process.env.NEXTAUTH_SECRET) {
+  throw new Error('NEXTAUTH_SECRET is not defined in environment variables')
+}
+
+if (!process.env.NEXTAUTH_URL && process.env.NODE_ENV === 'production') {
+  throw new Error('NEXTAUTH_URL must be defined in production')
+}
 
 declare module 'next-auth' {
   interface Session {
@@ -47,24 +57,45 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Email and password are required')
         }
 
-        const result = await authAPI.validateCredentials({
-          email: credentials.email,
-          password: credentials.password,
-          faceImageBase64: credentials.faceImageBase64,
+        // Find user by email
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email },
+          select: {
+            id: true,
+            email: true,
+            username: true,
+            hashedPassword: true,
+            corePersonId: true,
+            isActive: true,
+            isVerified: true,
+          },
         })
 
-        if (result.error || !result.data) {
-          throw new Error(result.error || 'Authentication failed')
+        if (!user) {
+          throw new Error('Invalid email or password')
         }
 
-        const user = result.data as any
+        // Check if account is active
+        if (!user.isActive) {
+          throw new Error('Your account has been deactivated')
+        }
+
+        // Verify password
+        const isPasswordValid = await bcrypt.compare(
+          credentials.password,
+          user.hashedPassword
+        )
+
+        if (!isPasswordValid) {
+          throw new Error('Invalid email or password')
+        }
 
         return {
           id: user.id,
           email: user.email,
           username: user.username,
-          personId: user.person_id,
-          isVerified: user.is_verified,
+          personId: user.corePersonId ?? undefined,
+          isVerified: user.isVerified,
         }
       },
     }),
@@ -98,6 +129,19 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
+    updateAge: 24 * 60 * 60, // Update session every 24 hours
+  },
+  cookies: {
+    sessionToken: {
+      name: `${process.env.NODE_ENV === 'production' ? '__Secure-' : ''}next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
   },
   secret: process.env.NEXTAUTH_SECRET,
+  debug: process.env.NODE_ENV === 'development',
 }

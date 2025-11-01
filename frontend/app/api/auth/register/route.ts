@@ -17,9 +17,25 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { coreAPI } from '@/lib/core-api-client'
 import bcrypt from 'bcryptjs'
+import crypto from 'crypto'
+import { rateLimitRegister, getClientIp } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting
+    const clientIp = getClientIp(request)
+    const rateLimit = rateLimitRegister(clientIp)
+    
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { 
+          error: 'Too many registration attempts. Please try again later.',
+          retryAfter: rateLimit.resetInSeconds 
+        },
+        { status: 429 }
+      )
+    }
+
     // Parse FormData
     const formData = await request.formData()
     const email = formData.get('email') as string
@@ -117,11 +133,34 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    // Step 6: Generate email verification token
+    console.log('[Register] Generating verification token...')
+    const verificationToken = crypto.randomBytes(32).toString('hex')
+    const tokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+
+    await prisma.verificationToken.create({
+      data: {
+        identifier: `verify-email:${email}`,
+        token: verificationToken,
+        expires: tokenExpires,
+      },
+    })
+
+    // TODO: Send verification email
+    // This would typically use a service like SendGrid, AWS SES, or Resend
+    // Example:
+    // await sendVerificationEmail({
+    //   to: email,
+    //   username: username,
+    //   verificationLink: `${process.env.NEXTAUTH_URL}/verify-email?token=${verificationToken}`
+    // })
+
     console.log(`[Register] Registration complete for ${username}`)
+    console.log(`[Register] Verification link: ${process.env.NEXTAUTH_URL}/verify-email?token=${verificationToken}`)
 
     return NextResponse.json(
       {
-        message: 'User registered successfully',
+        message: 'User registered successfully. Please check your email to verify your account.',
         user: {
           id: user.id,
           email: user.email,
