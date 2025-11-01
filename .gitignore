@@ -35,7 +35,13 @@ models/*
 # Testing
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
+coverage.xml
+test.db
+test-results/
+.locust/
+*.log
 
 # OS
 .DS_Store
