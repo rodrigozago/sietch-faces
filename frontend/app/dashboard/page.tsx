@@ -80,7 +80,7 @@ export default function DashboardPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground">
-            Welcome back, {session?.user?.name || "User"}
+            Welcome back, {session?.user?.username || "User"}
           </p>
         </div>
 

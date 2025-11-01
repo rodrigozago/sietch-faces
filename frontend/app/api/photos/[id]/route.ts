@@ -39,7 +39,7 @@ export async function GET(
             username: true,
           },
         },
-        albums: {
+        albumPhotos: {
           include: {
             album: {
               select: {
@@ -63,9 +63,9 @@ export async function GET(
       select: { id: true },
     });
 
-    const userAlbumIdSet = new Set(userAlbumIds.map((a) => a.id));
-    const photoAlbumIds = photo.albums.map((a) => a.albumId);
-    const hasAccess = photoAlbumIds.some((id) => userAlbumIdSet.has(id));
+    const userAlbumIdSet = new Set(userAlbumIds.map((a: { id: string }) => a.id));
+    const photoAlbumIds = photo.albumPhotos.map((ap: { albumId: string }) => ap.albumId);
+    const hasAccess = photoAlbumIds.some((id: string) => userAlbumIdSet.has(id));
 
     if (!hasAccess) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
@@ -90,7 +90,7 @@ export async function GET(
         uploader: photo.uploader,
         coreFaceIds: photo.coreFaceIds,
         faces,
-        albums: photo.albums.map((ap) => ({
+        albums: photo.albumPhotos.map((ap: any) => ({
           id: ap.album.id,
           name: ap.album.name,
           albumType: ap.album.albumType,
@@ -129,7 +129,7 @@ export async function DELETE(
     const photo = await prisma.photo.findUnique({
       where: { id: params.id },
       include: {
-        albums: true,
+        albumPhotos: true,
       },
     });
 
@@ -182,7 +182,7 @@ export async function DELETE(
 
     return NextResponse.json({
       message: 'Photo deleted successfully',
-      deletedFromAlbums: photo.albums.length,
+      deletedFromAlbums: photo.albumPhotos.length,
       facesDeleted: deleteFaces ? photo.coreFaceIds.length : 0,
     });
   } catch (error) {
