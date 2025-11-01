@@ -182,4 +182,10 @@ psql postgresql://user:password@localhost:5432/sietch_bff -c "SELECT 1"
 - Added retry logic with exponential backoff
 - Added timeout handling for all Core API requests
 - Enhanced error logging with operation context
+- **Simplified architecture**: Removed duplicate routes and old `api-client.ts`
+  - Deleted `/api/users/claim` (duplicate of `/api/users/me/claim`)
+  - Deleted `/api/users/unclaimed-matches` (duplicate of `/api/users/me/unclaimed`)
+  - Deleted `/api/photos` (duplicate functionality in `/api/photos/upload`)
+  - Deleted `lib/api-client.ts` (replaced by `core-api-client.ts`)
+  - BFF now calls Core API directly without Internal API middleman
 - Updated documentation
