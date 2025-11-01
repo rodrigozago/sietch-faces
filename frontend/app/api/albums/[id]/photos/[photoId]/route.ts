@@ -50,8 +50,11 @@ export async function DELETE(
     // Prevent removing photos from auto_faces albums
     if (album.albumType === 'auto_faces') {
       return NextResponse.json(
-        { error: 'Cannot manually remove photos from auto-faces albums' },
-        { status: 400 }
+        { 
+          error: 'Cannot manually remove photos from auto-faces albums',
+          message: 'Auto-faces albums are managed automatically based on facial recognition. Photos are added when faces are detected and cannot be manually removed.'
+        },
+        { status: 403 }
       );
     }
 

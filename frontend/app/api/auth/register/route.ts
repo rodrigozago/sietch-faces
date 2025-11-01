@@ -101,18 +101,20 @@ export async function POST(request: NextRequest) {
 
     // Step 2: Search for the saved face to get person_id
     // When auto_save=true, Core API creates a face and assigns it to a person
+    // We search with a high similarity threshold to find the exact face we just saved
     console.log('[Register] Searching for person ID...')
-    const searchResponse = await coreAPI.searchSimilar(face.embedding, 0.5, 1)
+    const searchResponse = await coreAPI.searchSimilar(face.embedding, 0.95, 5)
     
     let personId: number
     if (searchResponse.matches.length > 0) {
+      // Use the best match (should be the face we just saved)
       personId = searchResponse.matches[0].person_id
-      console.log(`[Register] Found person ID: ${personId}`)
+      console.log(`[Register] Found person ID: ${personId} (similarity: ${searchResponse.matches[0].similarity})`)
     } else {
-      // This shouldn't happen if auto_save worked, but handle it gracefully
-      console.warn('[Register] No person found after auto_save, this is unexpected')
+      // This shouldn't happen if auto_save worked correctly
+      console.error('[Register] No person found after auto_save - Core API may have failed')
       return NextResponse.json(
-        { error: 'Face detection service error. Please try again.' },
+        { error: 'Face registration failed. Please try again or contact support.' },
         { status: 503 }
       )
     }
