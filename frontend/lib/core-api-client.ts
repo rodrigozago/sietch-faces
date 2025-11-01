@@ -3,9 +3,17 @@
  * 
  * HTTP client for communicating with the FastAPI Core microservice.
  * Handles face detection, similarity search, person management, and clustering.
+ * 
+ * Features:
+ * - Automatic retry with exponential backoff
+ * - Configurable timeouts
+ * - Enhanced error logging
  */
 
 const CORE_API_URL = process.env.CORE_API_URL || 'http://localhost:8000';
+const DEFAULT_TIMEOUT = 30000; // 30 seconds
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // 1 second base delay
 
 // ============================================================================
 // Types - Match Core API schemas
@@ -102,6 +110,81 @@ export interface HealthResponse {
 }
 
 // ============================================================================
+// Utility Functions
+// ============================================================================
+
+/**
+ * Sleep for a given duration
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Fetch with timeout
+ */
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit = {},
+  timeout: number = DEFAULT_TIMEOUT
+): Promise<Response> {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    clearTimeout(id);
+    return response;
+  } catch (error) {
+    clearTimeout(id);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`Request timeout after ${timeout}ms`);
+    }
+    throw error;
+  }
+}
+
+/**
+ * Retry a function with exponential backoff
+ */
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = MAX_RETRIES,
+  baseDelay: number = RETRY_DELAY,
+  operation: string = 'operation'
+): Promise<T> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+
+      // Don't retry on 4xx errors (client errors)
+      if (error instanceof Error && error.message.includes('status 4')) {
+        throw error;
+      }
+
+      if (attempt < maxRetries) {
+        const delay = baseDelay * Math.pow(2, attempt);
+        console.log(
+          `[Core API] ${operation} failed (attempt ${attempt + 1}/${maxRetries + 1}), retrying in ${delay}ms...`,
+          error
+        );
+        await sleep(delay);
+      }
+    }
+  }
+
+  console.error(`[Core API] ${operation} failed after ${maxRetries + 1} attempts`, lastError);
+  throw lastError;
+}
+
+// ============================================================================
 // Core API Client Class
 // ============================================================================
 
@@ -113,13 +196,44 @@ class CoreAPIClient {
   }
 
   /**
+   * Make a request with retry and timeout
+   */
+  private async request(
+    url: string,
+    options: RequestInit = {},
+    operation: string = 'request',
+    timeout: number = DEFAULT_TIMEOUT
+  ): Promise<Response> {
+    return retryWithBackoff(
+      async () => {
+        const response = await fetchWithTimeout(url, options, timeout);
+        
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({}));
+          const errorMessage = error.detail || `${operation} failed: ${response.statusText}`;
+          const statusError = new Error(errorMessage);
+          (statusError as any).status = response.status;
+          throw statusError;
+        }
+
+        return response;
+      },
+      MAX_RETRIES,
+      RETRY_DELAY,
+      operation
+    );
+  }
+
+  /**
    * Health check
    */
   async health(): Promise<HealthResponse> {
-    const response = await fetch(`${this.baseUrl}/health`);
-    if (!response.ok) {
-      throw new Error(`Health check failed: ${response.statusText}`);
-    }
+    const response = await this.request(
+      `${this.baseUrl}/health`,
+      {},
+      'Health check',
+      5000 // Shorter timeout for health checks
+    );
     return response.json();
   }
 
@@ -127,10 +241,12 @@ class CoreAPIClient {
    * Get system statistics
    */
   async stats(): Promise<SystemStats> {
-    const response = await fetch(`${this.baseUrl}/stats`);
-    if (!response.ok) {
-      throw new Error(`Failed to get stats: ${response.statusText}`);
-    }
+    const response = await this.request(
+      `${this.baseUrl}/stats`,
+      {},
+      'Get stats',
+      10000
+    );
     return response.json();
   }
 
@@ -151,15 +267,15 @@ class CoreAPIClient {
     formData.append('min_confidence', minConfidence.toString());
     formData.append('auto_save', autoSave.toString());
 
-    const response = await fetch(`${this.baseUrl}/detect`, {
-      method: 'POST',
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.detail || `Face detection failed: ${response.statusText}`);
-    }
+    const response = await this.request(
+      `${this.baseUrl}/detect`,
+      {
+        method: 'POST',
+        body: formData,
+      },
+      'Face detection',
+      60000 // Longer timeout for face detection (60s)
+    );
 
     return response.json();
   }
@@ -176,22 +292,22 @@ class CoreAPIClient {
     threshold: number = 0.6,
     limit: number = 10
   ): Promise<SimilaritySearchResponse> {
-    const response = await fetch(`${this.baseUrl}/search`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const response = await this.request(
+      `${this.baseUrl}/search`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          embedding,
+          threshold,
+          limit,
+        }),
       },
-      body: JSON.stringify({
-        embedding,
-        threshold,
-        limit,
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.detail || `Similarity search failed: ${response.statusText}`);
-    }
+      'Similarity search',
+      30000 // 30s timeout
+    );
 
     return response.json();
   }
@@ -204,14 +320,11 @@ class CoreAPIClient {
    * List all persons
    */
   async listPersons(skip: number = 0, limit: number = 100): Promise<Person[]> {
-    const response = await fetch(
-      `${this.baseUrl}/persons?skip=${skip}&limit=${limit}`
+    const response = await this.request(
+      `${this.baseUrl}/persons?skip=${skip}&limit=${limit}`,
+      {},
+      'List persons'
     );
-
-    if (!response.ok) {
-      throw new Error(`Failed to list persons: ${response.statusText}`);
-    }
-
     return response.json();
   }
 
@@ -225,22 +338,20 @@ class CoreAPIClient {
     name: string,
     metadata: Record<string, any> = {}
   ): Promise<Person> {
-    const response = await fetch(`${this.baseUrl}/persons`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const response = await this.request(
+      `${this.baseUrl}/persons`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name,
+          metadata,
+        }),
       },
-      body: JSON.stringify({
-        name,
-        metadata,
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.detail || `Failed to create person: ${response.statusText}`);
-    }
-
+      'Create person'
+    );
     return response.json();
   }
 
@@ -248,15 +359,11 @@ class CoreAPIClient {
    * Get person details with all faces
    */
   async getPerson(personId: number): Promise<PersonWithFaces> {
-    const response = await fetch(`${this.baseUrl}/persons/${personId}`);
-
-    if (!response.ok) {
-      if (response.status === 404) {
-        throw new Error('Person not found');
-      }
-      throw new Error(`Failed to get person: ${response.statusText}`);
-    }
-
+    const response = await this.request(
+      `${this.baseUrl}/persons/${personId}`,
+      {},
+      `Get person ${personId}`
+    );
     return response.json();
   }
 
@@ -321,23 +428,21 @@ class CoreAPIClient {
     deleted_person_ids: number[];
     message: string;
   }> {
-    const response = await fetch(`${this.baseUrl}/persons/merge`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const response = await this.request(
+      `${this.baseUrl}/persons/merge`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          source_person_ids: sourcePersonIds,
+          target_person_id: targetPersonId,
+          keep_name: keepName,
+        }),
       },
-      body: JSON.stringify({
-        source_person_ids: sourcePersonIds,
-        target_person_id: targetPersonId,
-        keep_name: keepName,
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.detail || `Failed to merge persons: ${response.statusText}`);
-    }
-
+      'Merge persons'
+    );
     return response.json();
   }
 
@@ -358,12 +463,7 @@ class CoreAPIClient {
       url += `&person_id=${personId}`;
     }
 
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      throw new Error(`Failed to list faces: ${response.statusText}`);
-    }
-
+    const response = await this.request(url, {}, 'List faces');
     return response.json();
   }
 
@@ -415,23 +515,22 @@ class CoreAPIClient {
     eps: number = 0.4,
     minSamples: number = 2
   ): Promise<ClusterResponse> {
-    const response = await fetch(`${this.baseUrl}/cluster`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const response = await this.request(
+      `${this.baseUrl}/cluster`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          face_ids: faceIds,
+          eps,
+          min_samples: minSamples,
+        }),
       },
-      body: JSON.stringify({
-        face_ids: faceIds,
-        eps,
-        min_samples: minSamples,
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.detail || `Clustering failed: ${response.statusText}`);
-    }
-
+      'Cluster faces',
+      60000 // Longer timeout for clustering (60s)
+    );
     return response.json();
   }
 }
