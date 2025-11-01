@@ -78,9 +78,9 @@ export async function POST(request: NextRequest) {
     const bytes = await photo.arrayBuffer()
     const blob = new Blob([bytes], { type: photo.type })
 
-    // Step 1: Detect faces via Core API
-    console.log('[Register] Detecting face...')
-    const detectResponse = await coreAPI.detectFaces(blob, 0.9, false)
+    // Step 1: Detect and save face via Core API
+    console.log('[Register] Detecting and saving face...')
+    const detectResponse = await coreAPI.detectFaces(blob, 0.9, true)
 
     if (detectResponse.faces.length === 0) {
       return NextResponse.json(
@@ -99,11 +99,23 @@ export async function POST(request: NextRequest) {
     const face = detectResponse.faces[0]
     console.log(`[Register] Face detected with confidence ${face.confidence}`)
 
-    // Step 2: Create person in Core API with the embedding
-    console.log('[Register] Creating person in Core...')
-    const personResponse = await coreAPI.createPerson(username, [face.embedding])
-
-    console.log(`[Register] Person created with ID ${personResponse.id}`)
+    // Step 2: Search for the saved face to get person_id
+    // When auto_save=true, Core API creates a face and assigns it to a person
+    console.log('[Register] Searching for person ID...')
+    const searchResponse = await coreAPI.searchSimilar(face.embedding, 0.5, 1)
+    
+    let personId: number
+    if (searchResponse.matches.length > 0) {
+      personId = searchResponse.matches[0].person_id
+      console.log(`[Register] Found person ID: ${personId}`)
+    } else {
+      // This shouldn't happen if auto_save worked, but handle it gracefully
+      console.warn('[Register] No person found after auto_save, this is unexpected')
+      return NextResponse.json(
+        { error: 'Face detection service error. Please try again.' },
+        { status: 503 }
+      )
+    }
 
     // Step 3: Hash password
     const hashedPassword = await bcrypt.hash(password, 10)
@@ -115,7 +127,7 @@ export async function POST(request: NextRequest) {
         email,
         username,
         hashedPassword,
-        corePersonId: personResponse.id,
+        corePersonId: personId,
         isActive: true,
         isVerified: false,
       },
@@ -125,11 +137,12 @@ export async function POST(request: NextRequest) {
     console.log('[Register] Creating auto-faces album...')
     await prisma.album.create({
       data: {
-        name: 'My Faces',
+        name: `Photos of ${username}`,
         description: 'Photos where you appear (automatically detected)',
         albumType: 'auto_faces',
         ownerId: user.id,
         isPrivate: false,
+        corePersonId: personId,
       },
     })
 
@@ -165,7 +178,7 @@ export async function POST(request: NextRequest) {
           id: user.id,
           email: user.email,
           username: user.username,
-          corePersonId: user.corePersonId,
+          corePersonId: personId,
         },
       },
       { status: 201 }
