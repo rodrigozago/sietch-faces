@@ -210,11 +210,10 @@ export async function POST(request: NextRequest) {
 
       console.log(`[Photo Upload] Found ${matchingUsers.length} matching users`);
 
-      // Add photo to each user's auto-album
+      // Add photo to each user's auto-album(s)
       for (const matchingUser of matchingUsers) {
-        const autoAlbum = matchingUser.albums[0]; // Should only have one auto_faces album
-
-        if (autoAlbum) {
+        // Handle multiple auto_faces albums per user (if they exist)
+        for (const autoAlbum of matchingUser.albums) {
           try {
             // Check if photo already in album (prevent duplicates)
             const existing = await prisma.albumPhoto.findFirst({
@@ -235,11 +234,11 @@ export async function POST(request: NextRequest) {
               });
 
               autoAddedAlbums.push(autoAlbum.id);
-              console.log(`[Photo Upload] Auto-added to ${matchingUser.username}'s album`);
+              console.log(`[Photo Upload] Auto-added to ${matchingUser.username}'s album "${autoAlbum.name}"`);
             }
           } catch (error) {
             console.error(`[Photo Upload] Error adding to ${matchingUser.username}'s album:`, error);
-            // Continue with other users even if one fails
+            // Continue with other albums even if one fails
           }
         }
       }
