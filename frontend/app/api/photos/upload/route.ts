@@ -200,7 +200,7 @@ export async function POST(request: NextRequest) {
           },
         },
         include: {
-          albums: {
+          ownedAlbums: {
             where: {
               albumType: 'auto_faces',
             },
@@ -212,7 +212,7 @@ export async function POST(request: NextRequest) {
 
       // Add photo to each user's auto-album
       for (const matchingUser of matchingUsers) {
-        const autoAlbum = matchingUser.albums[0]; // Should only have one auto_faces album
+        const autoAlbum = matchingUser.ownedAlbums[0]; // Should only have one auto_faces album
 
         if (autoAlbum) {
           try {

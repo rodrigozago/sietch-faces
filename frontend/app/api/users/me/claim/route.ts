@@ -15,7 +15,7 @@ import { z } from 'zod';
 
 const claimSchema = z.object({
   personIds: z.array(z.number()).min(1),
-  keepName: z.boolean().optional().default(false),
+  keepName: z.string().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -81,9 +81,9 @@ export async function POST(request: NextRequest) {
     console.log(`[Claim] Found ${totalFacesClaimed} faces to claim`);
 
     // Merge persons in Core API
-    const mergeResult = await coreAPI.mergePersons(personIds, user.corePersonId, keepName);
+    const mergeResult = await coreAPI.mergePersons(personIds, user.corePersonId!, keepName);
 
-    console.log(`[Claim] Merged persons in Core: ${mergeResult.merged_count} persons, ${mergeResult.faces_moved} faces`);
+    console.log(`[Claim] Merged persons in Core: ${mergeResult.deleted_person_ids.length} persons, ${mergeResult.faces_transferred} faces`);
 
     // Get user's auto-album
     const autoAlbum = await prisma.album.findFirst({
