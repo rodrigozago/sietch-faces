@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth, serverErrorResponse } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
-import { CoreAPIClient } from '@/lib/core-api-client'
+import coreAPI from '@/lib/core-api-client'
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       return authResult.error
     }
 
-    const { user, session } = authResult
+    const { user } = authResult
 
     const formData = await request.formData()
     const photo = formData.get('photo') as File
@@ -29,36 +29,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get user's face ID
-    const dbUser = await prisma.user.findUnique({
-      where: { id: user.id },
-      select: { coreFaceId: true },
-    })
-
-    if (!dbUser?.coreFaceId) {
-      return NextResponse.json(
-        { error: 'User face ID not found' },
-        { status: 404 }
-      )
-    }
-
-    // Convert photo to buffer
-    const buffer = Buffer.from(await photo.arrayBuffer())
-
-    // Update face in Core API
-    const coreClient = new CoreAPIClient()
-    const coreToken = session?.coreApiToken as string
-
-    if (!coreToken) {
-      return NextResponse.json(
-        { error: 'Core API token not found' },
-        { status: 401 }
-      )
-    }
-
-    await coreClient.updateFace(dbUser.coreFaceId, buffer, coreToken)
-
-    return NextResponse.json({ message: 'Photo updated successfully' })
+    // TODO: Implement profile photo update
+    // This requires:
+    // 1. Uploading the photo to get a face detection
+    // 2. Adding the new face to the user's Core person
+    // 3. Potentially setting it as the primary face
+    // 
+    // For now, return a not implemented response
+    return NextResponse.json(
+      { error: 'Profile photo update not yet implemented', message: 'This feature requires additional Core API endpoints' },
+      { status: 501 }
+    )
   } catch (error) {
     console.error('[Update Photo] Error:', error)
     return serverErrorResponse('Failed to update photo')

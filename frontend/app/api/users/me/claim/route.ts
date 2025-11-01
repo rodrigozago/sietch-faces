@@ -81,9 +81,10 @@ export async function POST(request: NextRequest) {
     console.log(`[Claim] Found ${totalFacesClaimed} faces to claim`);
 
     // Merge persons in Core API
-    const mergeResult = await coreAPI.mergePersons(personIds, user.corePersonId, keepName);
+    // keepName is optional - if true, we keep the user's existing name, otherwise undefined
+    const mergeResult = await coreAPI.mergePersons(personIds, user.corePersonId, keepName ? user.username : undefined);
 
-    console.log(`[Claim] Merged persons in Core: ${mergeResult.merged_count} persons, ${mergeResult.faces_moved} faces`);
+    console.log(`[Claim] Merged persons in Core: ${mergeResult.deleted_person_ids.length} persons, ${mergeResult.faces_transferred} faces`);
 
     // Get user's auto-album
     const autoAlbum = await prisma.album.findFirst({

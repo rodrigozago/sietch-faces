@@ -209,11 +209,9 @@ export default function ProfilePage() {
     return null
   }
 
-  const userInitials = session.user.name
-    ? session.user.name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
+  const userInitials = session.user.username
+    ? session.user.username
+        .slice(0, 2)
         .toUpperCase()
     : session.user.email?.[0].toUpperCase() || "U"
 
@@ -230,11 +228,11 @@ export default function ProfilePage() {
           <CardHeader className="text-center">
             <div className="flex flex-col items-center space-y-4">
               <Avatar className="h-24 w-24">
-                <AvatarImage src={session.user.image || undefined} alt={session.user.name || "User"} />
+                <AvatarImage src={undefined} alt={session.user.username || "User"} />
                 <AvatarFallback className="text-2xl">{userInitials}</AvatarFallback>
               </Avatar>
               <div>
-                <CardTitle>{session.user.name || "User"}</CardTitle>
+                <CardTitle>{session.user.username || "User"}</CardTitle>
                 <CardDescription>{session.user.email}</CardDescription>
               </div>
               <Dialog open={photoDialogOpen} onOpenChange={setPhotoDialogOpen}>

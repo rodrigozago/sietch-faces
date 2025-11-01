@@ -20,9 +20,9 @@ const updateAlbumSchema = z.object({
 });
 
 interface RouteContext {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 /**
@@ -31,8 +31,9 @@ interface RouteContext {
  */
 export async function GET(
   request: NextRequest,
-  { params }: RouteContext
+  context: RouteContext
 ) {
+  const params = await context.params;
   try {
     // Get current user session
     const session = await getServerSession();
@@ -100,8 +101,9 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: RouteContext
+  context: RouteContext
 ) {
+  const params = await context.params;
   try {
     // Get current user session
     const session = await getServerSession();
@@ -185,8 +187,9 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: RouteContext
+  context: RouteContext
 ) {
+  const params = await context.params;
   try {
     // Get current user session
     const session = await getServerSession();
