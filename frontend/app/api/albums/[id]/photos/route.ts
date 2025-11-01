@@ -10,15 +10,16 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 
 interface RouteContext {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export async function GET(
   request: NextRequest,
-  { params }: RouteContext
+  context: RouteContext
 ) {
+  const params = await context.params;
   try {
     // Get current user session
     const session = await getServerSession();

@@ -200,7 +200,7 @@ export async function POST(request: NextRequest) {
           },
         },
         include: {
-          albums: {
+          ownedAlbums: {
             where: {
               albumType: 'auto_faces',
             },
@@ -213,7 +213,7 @@ export async function POST(request: NextRequest) {
       // Add photo to each user's auto-album(s)
       for (const matchingUser of matchingUsers) {
         // Handle multiple auto_faces albums per user (if they exist)
-        for (const autoAlbum of matchingUser.albums) {
+        for (const autoAlbum of matchingUser.ownedAlbums) {
           try {
             // Check if photo already in album (prevent duplicates)
             const existing = await prisma.albumPhoto.findFirst({

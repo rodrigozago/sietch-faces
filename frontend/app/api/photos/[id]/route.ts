@@ -14,8 +14,9 @@ import { existsSync } from 'fs';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params;
   try {
     const session = await getServerSession();
     if (!session?.user?.email) {
@@ -39,7 +40,7 @@ export async function GET(
             username: true,
           },
         },
-        albums: {
+        albumPhotos: {
           include: {
             album: {
               select: {
@@ -64,7 +65,7 @@ export async function GET(
     });
 
     const userAlbumIdSet = new Set(userAlbumIds.map((a) => a.id));
-    const photoAlbumIds = photo.albums.map((a) => a.albumId);
+    const photoAlbumIds = photo.albumPhotos.map((a) => a.albumId);
     const hasAccess = photoAlbumIds.some((id) => userAlbumIdSet.has(id));
 
     if (!hasAccess) {
@@ -90,7 +91,7 @@ export async function GET(
         uploader: photo.uploader,
         coreFaceIds: photo.coreFaceIds,
         faces,
-        albums: photo.albums.map((ap) => ({
+        albums: photo.albumPhotos.map((ap) => ({
           id: ap.album.id,
           name: ap.album.name,
           albumType: ap.album.albumType,
@@ -109,8 +110,9 @@ export async function GET(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params;
   try {
     const session = await getServerSession();
     if (!session?.user?.email) {
@@ -129,7 +131,7 @@ export async function DELETE(
     const photo = await prisma.photo.findUnique({
       where: { id: params.id },
       include: {
-        albums: true,
+        albumPhotos: true,
       },
     });
 
@@ -182,7 +184,7 @@ export async function DELETE(
 
     return NextResponse.json({
       message: 'Photo deleted successfully',
-      deletedFromAlbums: photo.albums.length,
+      deletedFromAlbums: photo.albumPhotos.length,
       facesDeleted: deleteFaces ? photo.coreFaceIds.length : 0,
     });
   } catch (error) {

@@ -11,16 +11,17 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 
 interface RouteContext {
-  params: {
+  params: Promise<{
     id: string;
     photoId: string;
-  };
+  }>;
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: RouteContext
+  context: RouteContext
 ) {
+  const params = await context.params;
   try {
     const session = await getServerSession();
     if (!session?.user?.email) {
