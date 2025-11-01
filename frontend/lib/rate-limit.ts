@@ -15,7 +15,8 @@ interface RateLimitEntry {
 const rateLimitStore = new Map<string, RateLimitEntry>()
 
 // Clean up expired entries every 5 minutes
-setInterval(() => {
+// Store interval ID for cleanup on shutdown
+const cleanupInterval = setInterval(() => {
   const now = Date.now()
   for (const [key, entry] of rateLimitStore.entries()) {
     if (entry.resetTime < now) {
@@ -23,6 +24,9 @@ setInterval(() => {
     }
   }
 }, 5 * 60 * 1000)
+
+// Allow the process to exit even with this timer running
+cleanupInterval.unref()
 
 export interface RateLimitConfig {
   /** Maximum number of requests allowed in the window */

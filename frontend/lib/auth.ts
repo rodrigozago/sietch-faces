@@ -157,7 +157,9 @@ export const authOptions: NextAuthOptions = {
             })
             
             if (existingUsername) {
-              username = `${username}_${Date.now().toString(36)}`
+              // Use crypto for better uniqueness
+              const uniqueSuffix = require('crypto').randomBytes(4).toString('hex')
+              username = `${username}_${uniqueSuffix}`
             }
 
             // Create user (OAuth users are auto-verified)
@@ -205,7 +207,7 @@ export const authOptions: NextAuthOptions = {
       }
       
       // On initial sign-in with OAuth, fetch user details from database
-      if (account && account.provider !== 'credentials') {
+      if (account && account.provider !== 'credentials' && token.email) {
         const dbUser = await prisma.user.findUnique({
           where: { email: token.email },
           select: {
