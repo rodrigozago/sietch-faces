@@ -1,9 +1,35 @@
+"""
+Configuration settings for Sietch Faces API.
+
+This module uses Pydantic Settings for type-safe configuration management.
+Settings are loaded from environment variables or .env file.
+
+Example:
+    >>> from app.config import get_settings
+    >>> settings = get_settings()
+    >>> print(settings.api_title)
+"""
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 from typing import Optional
 
 
 class Settings(BaseSettings):
+    """
+    Application settings loaded from environment variables or .env file.
+    
+    All settings can be overridden by environment variables.
+    For production, create a .env file with secure values.
+    
+    Attributes:
+        database_url: Database connection string
+        upload_dir: Directory for uploaded files
+        max_file_size: Maximum file size in bytes
+        similarity_threshold: Face similarity threshold for matching
+        api_title: API title for documentation
+        api_version: API version string
+        debug: Enable debug mode
+    """
     # Database
     database_url: str = "sqlite:///./sietch_faces.db"
     
@@ -45,14 +71,29 @@ class Settings(BaseSettings):
     frontend_url: str = "http://localhost:3000"
     
     class Config:
+        """Pydantic configuration for Settings class."""
         env_file = ".env"
         case_sensitive = False
 
     def model_post_init(self, __context) -> None:  # type: ignore[override]
+        """Post-initialization hook to set default values."""
         if not self.core_api_bootstrap_key and self.internal_api_key:
             self.core_api_bootstrap_key = self.internal_api_key
 
 
 @lru_cache()
 def get_settings() -> Settings:
+    """
+    Get application settings (cached singleton).
+    
+    Settings are loaded once and cached for the lifetime of the application.
+    This prevents repeated file I/O and ensures consistency.
+    
+    Returns:
+        Settings: Application settings instance.
+        
+    Example:
+        >>> settings = get_settings()
+        >>> print(settings.database_url)
+    """
     return Settings()
