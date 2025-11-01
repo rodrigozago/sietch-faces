@@ -1,42 +1,69 @@
 "use client"
 
 import { useState } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2, Camera, Upload } from "lucide-react"
+import { Loader2, Camera } from "lucide-react"
 import { WebcamCapture } from "@/components/webcam-capture"
+import { useToast } from "@/hooks/use-toast"
+
+const registerSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+  username: z
+    .string()
+    .min(3, "Username must be at least 3 characters")
+    .max(30, "Username must be less than 30 characters")
+    .regex(/^[a-zA-Z0-9_-]+$/, "Username can only contain letters, numbers, hyphens, and underscores"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number"),
+  confirmPassword: z.string().min(1, "Please confirm your password"),
+  acceptTerms: z.boolean().refine((val) => val === true, {
+    message: "You must accept the terms and conditions",
+  }),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+})
+
+type RegisterFormData = z.infer<typeof registerSchema>
 
 export default function RegisterPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [step, setStep] = useState<"form" | "photo">("form")
-  const [formData, setFormData] = useState({
-    email: "",
-    username: "",
-    password: "",
-    confirmPassword: "",
-  })
   const [photo, setPhoto] = useState<File | null>(null)
-  const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [formData, setFormData] = useState<RegisterFormData | null>(null)
 
-  const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    watch,
+  } = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      acceptTerms: false,
+    },
+  })
 
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match")
-      return
-    }
+  const acceptTerms = watch("acceptTerms")
 
-    if (formData.password.length < 8) {
-      setError("Password must be at least 8 characters")
-      return
-    }
-
+  const onFormSubmit = (data: RegisterFormData) => {
+    setFormData(data)
     setStep("photo")
   }
 
@@ -45,13 +72,16 @@ export default function RegisterPage() {
   }
 
   const handleRegister = async () => {
-    if (!photo) {
-      setError("Please capture or upload a photo")
+    if (!photo || !formData) {
+      toast({
+        variant: "destructive",
+        title: "Photo required",
+        description: "Please capture or upload a photo to continue.",
+      })
       return
     }
 
     setLoading(true)
-    setError("")
 
     try {
       // Create form data for multipart upload
@@ -69,14 +99,27 @@ export default function RegisterPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        setError(data.error || "Registration failed")
+        toast({
+          variant: "destructive",
+          title: "Registration failed",
+          description: data.error || "An error occurred during registration.",
+        })
         return
       }
 
-      // Auto-login after registration
+      toast({
+        title: "Success!",
+        description: "Your account has been created successfully.",
+      })
+
+      // Redirect to login page with success message
       router.push("/login?registered=true")
     } catch (err) {
-      setError("An error occurred. Please try again.")
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+      })
       console.error("Registration error:", err)
     } finally {
       setLoading(false)
@@ -94,20 +137,15 @@ export default function RegisterPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {error && (
-              <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">
-                {error}
-              </div>
-            )}
             <WebcamCapture onCapture={handlePhotoCapture} />
             {photo && (
-              <div className="text-center text-sm text-green-600">
+              <div className="text-center text-sm text-green-600 font-medium">
                 ✓ Photo captured successfully
               </div>
             )}
           </CardContent>
           <CardFooter className="flex justify-between">
-            <Button variant="outline" onClick={() => setStep("form")}>
+            <Button variant="outline" onClick={() => setStep("form")} disabled={loading}>
               Back
             </Button>
             <Button onClick={handleRegister} disabled={!photo || loading}>
@@ -135,23 +173,19 @@ export default function RegisterPage() {
             Sign up for Sietch Faces
           </CardDescription>
         </CardHeader>
-        <form onSubmit={handleFormSubmit}>
+        <form onSubmit={handleSubmit(onFormSubmit)}>
           <CardContent className="space-y-4">
-            {error && (
-              <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">
-                {error}
-              </div>
-            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="name@example.com"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                required
+                {...register("email")}
               />
+              {errors.email && (
+                <p className="text-sm text-red-600">{errors.email.message}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="username">Username</Label>
@@ -159,10 +193,11 @@ export default function RegisterPage() {
                 id="username"
                 type="text"
                 placeholder="johndoe"
-                value={formData.username}
-                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                required
+                {...register("username")}
               />
+              {errors.username && (
+                <p className="text-sm text-red-600">{errors.username.message}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
@@ -170,10 +205,11 @@ export default function RegisterPage() {
                 id="password"
                 type="password"
                 placeholder="••••••••"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                required
+                {...register("password")}
               />
+              {errors.password && (
+                <p className="text-sm text-red-600">{errors.password.message}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
@@ -181,10 +217,32 @@ export default function RegisterPage() {
                 id="confirmPassword"
                 type="password"
                 placeholder="••••••••"
-                value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                required
+                {...register("confirmPassword")}
               />
+              {errors.confirmPassword && (
+                <p className="text-sm text-red-600">{errors.confirmPassword.message}</p>
+              )}
+            </div>
+            <div className="flex items-start space-x-2">
+              <Checkbox
+                id="terms"
+                checked={acceptTerms}
+                onCheckedChange={(checked) => setValue("acceptTerms", checked as boolean)}
+              />
+              <div className="grid gap-1.5 leading-none">
+                <Label
+                  htmlFor="terms"
+                  className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                >
+                  I agree to the{" "}
+                  <Link href="/terms" className="text-primary hover:underline">
+                    terms and conditions
+                  </Link>
+                </Label>
+                {errors.acceptTerms && (
+                  <p className="text-sm text-red-600">{errors.acceptTerms.message}</p>
+                )}
+              </div>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
