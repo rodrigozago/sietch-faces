@@ -1,9 +1,16 @@
 """
-Face matching service for auto-association and similarity detection
+Face matching service for auto-association and similarity detection.
+
+This module provides services for:
+- Finding similar faces based on embeddings
+- Auto-associating faces to users
+- Finding unclaimed person matches
+- Suggesting person merges for duplicate cleanup
 """
 import numpy as np
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict
 from sqlalchemy.orm import Session
+import logging
 
 from app.models import Face, Person, User
 from app.face_recognition import FaceRecognizer
@@ -11,19 +18,48 @@ from app.config import get_settings
 
 settings = get_settings()
 face_recognizer = FaceRecognizer()
+logger = logging.getLogger(__name__)
 
 
 class MatchConfidence:
-    """Confidence thresholds for matching"""
+    """
+    Confidence threshold constants for face matching decisions.
+    
+    These thresholds determine the action to take based on similarity scores:
+    - HIGH: Auto-associate faces without user confirmation
+    - MEDIUM: Suggest match but require user confirmation
+    - LOW: Don't auto-associate, used as minimum threshold
+    """
     HIGH = 0.6      # Auto-associate without confirmation
     MEDIUM = 0.5    # Suggest but ask for confirmation
     LOW = 0.4       # Don't auto-associate
 
 
 class FaceMatchingService:
-    """Service for matching faces and auto-association"""
+    """
+    Service for matching faces and auto-association with users.
+    
+    This service handles:
+    - Finding similar faces based on embeddings
+    - Auto-associating new faces to existing persons
+    - Finding unclaimed persons that match a user
+    - Suggesting person merges to clean up duplicates
+    
+    Attributes:
+        db (Session): SQLAlchemy database session.
+        
+    Example:
+        >>> service = FaceMatchingService(db)
+        >>> matches = service.find_similar_faces(embedding, threshold=0.6)
+    """
     
     def __init__(self, db: Session):
+        """
+        Initialize FaceMatchingService with database session.
+        
+        Args:
+            db (Session): SQLAlchemy database session for queries.
+        """
         self.db = db
     
     def find_similar_faces(
